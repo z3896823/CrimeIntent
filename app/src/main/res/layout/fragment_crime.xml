@@ -14,7 +14,7 @@
         style="?android:listSeparatorTextViewStyle"/>
 
     <EditText
-        android:id="@+id/id_et_"
+        android:id="@+id/id_et_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/hint_crime_title"/>

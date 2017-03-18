@@ -13,11 +13,9 @@ import org.zyb.criminalintent.R;
  *     author : zyb
  *     e-mail : hbdxzyb@hotmail.com
  *     time   : 2017/03/17
- *     desc   : 专门用来生成托管碎片的活动的抽象类
+ *     desc   : 本类专门用来生成那些只需要托管Fragment的活动
  *     version: 1.0
  * </pre>
- *
- * 由于所有的活动类都只是为了托管碎片，那么就可以把他们的共同代码抽象出来封装一下
  *
  */
 
