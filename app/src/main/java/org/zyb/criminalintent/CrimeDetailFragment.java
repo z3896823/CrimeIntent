@@ -1,8 +1,10 @@
 package org.zyb.criminalintent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -17,6 +19,7 @@ import android.widget.EditText;
 import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeLab;
 
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -69,7 +72,15 @@ public class CrimeDetailFragment extends Fragment {
 
         btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
         btn_crimeDate.setText(crime.getDate().toString());
-        btn_crimeDate.setEnabled(false);
+        btn_crimeDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager manager = getFragmentManager();
+                DatePickerFragment dialog = DatePickerFragment.newInstance(crime.getDate());
+                dialog.setTargetFragment(CrimeDetailFragment.this, 1);
+                dialog.show(manager,"datePickerDialog");
+            }
+        });
 
         cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
         cb_isSolved.setChecked(crime.getSolved());
@@ -102,5 +113,24 @@ public class CrimeDetailFragment extends Fragment {
         CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
         crimeDetailFragment.setArguments(bundle);
         return crimeDetailFragment;
+    }
+
+    /**
+     * 先验证结果来自哪一方（requsetCode），再验证是什么结果（resultCode）
+     *
+     * @param requestCode identity who send this result
+     * @param resultCode identify the specific result
+     * @param data where the data is stored
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != 1){
+            return;
+        }
+        if (resultCode == DatePickerFragment.RESULT_OK){
+            Date date = (Date) data.getSerializableExtra("crimeDate");
+            crime.setDate(date);
+            btn_crimeDate.setText(crime.getDate().toString());
+        }
     }
 }

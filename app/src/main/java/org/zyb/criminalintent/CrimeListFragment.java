@@ -80,8 +80,6 @@ public class CrimeListFragment extends Fragment {
 //                    Intent intent = CrimeDetailActivity.newIntent(getActivity(),crimeList.get(position).getId());
                     Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getId());
                     startActivity(intent);
-
-
                 }
             });
 
@@ -112,7 +110,8 @@ public class CrimeListFragment extends Fragment {
 
         class CrimeHolder extends RecyclerView.ViewHolder{
 
-            TextView tv_title,tv_date;
+            TextView tv_title;
+            TextView tv_date;
             CheckBox cb_isSolved;
 
             private CrimeHolder(View itemView) {

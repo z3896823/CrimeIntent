@@ -33,6 +33,10 @@ public class Crime {
         return date;
     }
 
+    public void setDate(Date date){
+        this.date = date;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
