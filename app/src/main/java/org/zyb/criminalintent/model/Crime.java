@@ -1,5 +1,7 @@
 package org.zyb.criminalintent.model;
 
+import org.zyb.criminalintent.util.Utility;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -16,13 +18,13 @@ import java.util.UUID;
 public class Crime {
 
     private UUID uuid;
-    private Date date;
+    private String date;
     private String title;
     private boolean isSolved;
 
     public Crime() {
         this.uuid = UUID.randomUUID();
-        this.date = new Date();
+        this.date = Utility.dateToString(new Date());
     }
 
     public void setUuid(UUID uuid){
@@ -33,11 +35,11 @@ public class Crime {
         return uuid;
     }
 
-    public void setDate(Date date){
+    public void setDate(String date){
         this.date = date;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 

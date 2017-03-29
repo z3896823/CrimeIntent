@@ -82,7 +82,6 @@ public class DatePickerFragment extends DialogFragment {
      * @param date data to pass over
      */
     public void sentResult(int resultCode, Date date){
-
         if (getTargetFragment() == null){
             return;
         }

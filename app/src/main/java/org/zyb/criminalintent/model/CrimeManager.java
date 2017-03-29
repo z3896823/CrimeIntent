@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 
 import org.zyb.criminalintent.database.CrimeDBHelper;
 import org.zyb.criminalintent.database.CursorParser;
+import org.zyb.criminalintent.util.Utility;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -47,7 +49,6 @@ public class CrimeManager {
             "date text," +
             "isSolved int)";
 
-
     private CrimeManager(Context context){
         // create or get database here
         mContext = context.getApplicationContext();
@@ -69,40 +70,38 @@ public class CrimeManager {
         if (crimeList.isEmpty()){
             Crime crime = new Crime();
             crime.setTitle("this is a title");
-            crime.setDate(new Date());
+            crime.setDate(Utility.getNowTime());
             crime.setSolved(true);
             crimeList.add(crime);
         }
         return crimeList;
     }
-
+    //增
     public void addCrime(Crime crime){
         // add into database and query again
         UUID uuid = crime.getUuid();
         String title = crime.getTitle();
 
-        Date date = crime.getDate();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateString = sdf.format(date);
+        String date = crime.getDate();
 
         if (crime.getSolved()) {
-            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved)",
-                    new String[]{uuid.toString(),title,dateString,"1"});
+            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?)",
+                    new String[]{uuid.toString(),title,date,"1"});
         } else {
-            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved)",
-                    new String[]{uuid.toString(),title,dateString,"0"});
+            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?) ",
+                    new String[]{uuid.toString(),title,date,"0"});
         }
         // 更新crimeList
         crimeList = getCrimeList();
     }
-
+    //删
     public void deleteCrime(UUID crimeId){
         // delete a crime record
         crimeDB.execSQL("delete from crime where uuid = ?",new String[]{crimeId.toString()});
         // 更新crimeList
         crimeList = getCrimeList();
     }
-
+    //查
     public Crime getCrime(UUID uuid) {
         // 很明显，getCrime前必须先getCrimeList
         if (crimeList == null){
@@ -115,6 +114,21 @@ public class CrimeManager {
         }
         return null;
     }
+    //改title
+    public void changeCrimeTitle(UUID uuid,String s){
+        crimeDB.execSQL("update crime set title = ? where UUID = ?",new String[]{s,uuid.toString()});
+    }
+    //改isSolved
+    public void changeCrimeSolved(UUID uuid,boolean isSolved){
+        if (isSolved){
+            crimeDB.execSQL("update crime set isSolved = ? where UUID = ?",new String[]{"1",uuid.toString()});
+        } else {
+            crimeDB.execSQL("update crime set isSolved = ? where UUID = ?",new String[]{"0",uuid.toString()});
+        }
+    }
+    //改date
+    public void changeCrimeDate(UUID uuid,String date){
+        crimeDB.execSQL("update Crime set date = ? where UUID = ?",new String[]{date,uuid.toString()});
+    }
 
-    //设计一个有多个重载的getCrime()方法，该方法应该能购根据id或者title从数据库或者网络中查询到对应的Crime对象
 }

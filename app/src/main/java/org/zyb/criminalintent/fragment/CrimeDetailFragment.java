@@ -18,6 +18,7 @@ import android.widget.EditText;
 import org.zyb.criminalintent.R;
 import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeManager;
+import org.zyb.criminalintent.util.Utility;
 
 import java.util.Date;
 import java.util.UUID;
@@ -41,6 +42,8 @@ public class CrimeDetailFragment extends Fragment {
     private Button btn_crimeDate;
     private CheckBox cb_isSolved;
 
+    public CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+
     /**
      * 该静态方法供Activity在创建本Fragment的时候调用，使得本Fragment在创建之初，
      * 且在attach给Activity之前就获得需要的数据（使用setArguments()方法）
@@ -60,7 +63,7 @@ public class CrimeDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
-        crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
+        crime = crimeManager.getCrime(crimeId);//成功获取到Crime对象
     }
 
     @Override
@@ -69,6 +72,7 @@ public class CrimeDetailFragment extends Fragment {
 
         et_title = (EditText) v.findViewById(R.id.id_et_title);
         et_title.setText(crime.getTitle());
+        et_title.setSelection(et_title.getText().length());
         et_title.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -82,16 +86,18 @@ public class CrimeDetailFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
+                //向数据库提交
+                crimeManager.changeCrimeTitle(crime.getUuid(),s.toString());
             }
         });
 
         btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
-        btn_crimeDate.setText(crime.getDate().toString());
+        btn_crimeDate.setText(crime.getDate());
         btn_crimeDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentManager manager = getFragmentManager();
-                DatePickerFragment dialog = DatePickerFragment.newInstance(crime.getDate());
+                DatePickerFragment dialog = DatePickerFragment.newInstance(Utility.stringToDate(crime.getDate()));
                 dialog.setTargetFragment(CrimeDetailFragment.this, 1);
                 dialog.show(manager,"datePickerDialog");
             }
@@ -103,6 +109,8 @@ public class CrimeDetailFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 crime.setSolved(isChecked);
+                //向数据库提交
+                crimeManager.changeCrimeSolved(crime.getUuid(),crime.getSolved());
             }
         });
 
@@ -123,8 +131,10 @@ public class CrimeDetailFragment extends Fragment {
         }
         if (resultCode == DatePickerFragment.RESULT_OK){
             Date date = (Date) data.getSerializableExtra("crimeDate");
-            crime.setDate(date);
-            btn_crimeDate.setText(crime.getDate().toString());
+            crime.setDate(Utility.dateToString(date));
+            btn_crimeDate.setText(crime.getDate());
+            //向数据库提交
+            crimeManager.changeCrimeDate(crime.getUuid(),crime.getDate());
         }
     }
 }

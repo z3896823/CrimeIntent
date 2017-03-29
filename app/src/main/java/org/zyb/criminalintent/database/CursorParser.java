@@ -1,15 +1,11 @@
 package org.zyb.criminalintent.database;
 
 import android.database.Cursor;
-import android.util.Log;
-import android.widget.Toast;
 
 import org.zyb.criminalintent.model.Crime;
+import org.zyb.criminalintent.util.Utility;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +21,6 @@ import java.util.UUID;
 
 public class CursorParser {
 
-    @SuppressWarnings("all")
     public static List<Crime> getCrimeList(Cursor cursor){
         List<Crime> crimeList = new ArrayList<>();
         if (cursor.moveToFirst()){
@@ -35,13 +30,8 @@ public class CursorParser {
                 UUID uuid = UUID.fromString(cursor.getString(cursor.getColumnIndex("UUID")));
                 crime.setUuid(uuid);
                 // setDate
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                try {
-                    Date date = sdf.parse(cursor.getString(cursor.getColumnIndex("date")));
-                    crime.setDate(date);
-                } catch (ParseException e) {
-                    Log.d("ybz", "getCrime: date parse error");
-                }
+                String s = cursor.getString(cursor.getColumnIndex("date"));
+                crime.setDate(s);
                 // setTitle
                 String title = cursor.getString(cursor.getColumnIndex("title"));
                 crime.setTitle(title);

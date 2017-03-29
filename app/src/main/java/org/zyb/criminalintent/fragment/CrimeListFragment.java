@@ -42,6 +42,8 @@ public class CrimeListFragment extends Fragment {
 
     private CrimeAdapter adapter;
 
+    private List<Crime> crimeList = null;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +61,7 @@ public class CrimeListFragment extends Fragment {
         rv_crimeList.setLayoutManager(layoutManager);
 
         CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
-        List<Crime> crimeList = crimeManager.getCrimeList();
+        crimeList = crimeManager.getCrimeList();
         adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
 
@@ -85,6 +87,7 @@ public class CrimeListFragment extends Fragment {
             case R.id.id_menu_add:
                 Crime crime = new Crime();
                 CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+                //先向数据库提交这个新的对象，然后再去DetailFragment中具体修改这个对象
                 crimeManager.addCrime(crime);
                 Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getUuid());
                 startActivity(intent);
@@ -95,6 +98,7 @@ public class CrimeListFragment extends Fragment {
         return true;
     }
 
+    // Adapter
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeAdapter.CrimeHolder>{
 
         private List<Crime> crimeList;
@@ -111,7 +115,6 @@ public class CrimeListFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
-//                    Intent intent = CrimeDetailActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
                     Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
                     startActivity(intent);
                 }
@@ -131,6 +134,8 @@ public class CrimeListFragment extends Fragment {
                     int position = holder.getAdapterPosition();
                     Crime crime = crimeList.get(position);
                     crime.setSolved(isChecked);
+                    //向数据库提交数据
+                    CrimeManager.getCrimeManager(getActivity()).changeCrimeSolved(crime.getUuid(),crime.getSolved());
                 }
             });
 
@@ -141,7 +146,7 @@ public class CrimeListFragment extends Fragment {
         public void onBindViewHolder(CrimeHolder holder, int position) {
             Crime crime = crimeList.get(position);
             holder.tv_title.setText(crime.getTitle());
-            holder.tv_date.setText(crime.getDate().toString());
+            holder.tv_date.setText(crime.getDate());
             holder.cb_isSolved.setChecked(crime.getSolved());
         }
 
