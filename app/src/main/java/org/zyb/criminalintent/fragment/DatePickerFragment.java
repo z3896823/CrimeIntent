@@ -1,4 +1,4 @@
-package org.zyb.criminalintent;
+package org.zyb.criminalintent.fragment;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -6,12 +6,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.DatePicker;
+
+import org.zyb.criminalintent.R;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -33,7 +33,6 @@ public class DatePickerFragment extends DialogFragment {
 
     /**
      * 专供其他类调用的静态实例化方法
-     *
      * @param date
      * @return
      */
@@ -75,12 +74,10 @@ public class DatePickerFragment extends DialogFragment {
                     }
                 });
         return builder.create();
-
     }
 
     /**
      * 在本Fragment结束前回调上一个Fragment的onActivityResult方法将数据回传
-     *
      * @param resultCode the code to identify different result
      * @param date data to pass over
      */

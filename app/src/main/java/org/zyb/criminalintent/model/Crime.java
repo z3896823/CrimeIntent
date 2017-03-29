@@ -15,26 +15,30 @@ import java.util.UUID;
 
 public class Crime {
 
-    private UUID id;//该id只读，仅用作区分不同对象
-    private Date date;//该属性也只读，在对象生成的时候自动生成并赋值
+    private UUID uuid;
+    private Date date;
     private String title;
     private boolean isSolved;
 
     public Crime() {
-        this.id = UUID.randomUUID();
+        this.uuid = UUID.randomUUID();
         this.date = new Date();
     }
 
-    public UUID getId() {
-        return id;
+    public void setUuid(UUID uuid){
+        this.uuid = uuid;
     }
 
-    public Date getDate() {
-        return date;
+    public UUID getUuid() {
+        return uuid;
     }
 
     public void setDate(Date date){
         this.date = date;
+    }
+
+    public Date getDate() {
+        return date;
     }
 
     public void setTitle(String title) {

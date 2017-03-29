@@ -1,4 +1,4 @@
-package org.zyb.criminalintent;
+package org.zyb.criminalintent.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,7 +7,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +15,9 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import org.zyb.criminalintent.R;
 import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeLab;
+import org.zyb.criminalintent.model.CrimeManager;
 
 import java.util.Date;
 import java.util.UUID;
@@ -41,11 +41,26 @@ public class CrimeDetailFragment extends Fragment {
     private Button btn_crimeDate;
     private CheckBox cb_isSolved;
 
+    /**
+     * 该静态方法供Activity在创建本Fragment的时候调用，使得本Fragment在创建之初，
+     * 且在attach给Activity之前就获得需要的数据（使用setArguments()方法）
+     * @param uuid the data it needs
+     * @return a fragment with data
+     */
+    public static CrimeDetailFragment newInstance(UUID uuid){
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("crimeId",uuid);
+
+        CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
+        crimeDetailFragment.setArguments(bundle);
+        return crimeDetailFragment;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
-        crime = CrimeLab.getCrimeLab(getActivity()).getCrime(crimeId);//成功获取到Crime对象
+        crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
     }
 
     @Override
@@ -94,30 +109,9 @@ public class CrimeDetailFragment extends Fragment {
         return v;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
     /**
-     * 该静态方法供Activity在创建本Fragment的时候调用，使得本Fragment在创建之初，
-     * 且在attach给Activity之前就获得需要的数据（使用setArguments()方法）
-     *
-     * @param uuid the data it needs
-     * @return a fragment with data
-     */
-    public static CrimeDetailFragment newInstance(UUID uuid){
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("crimeId",uuid);
-
-        CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
-        crimeDetailFragment.setArguments(bundle);
-        return crimeDetailFragment;
-    }
-
-    /**
-     * 先验证结果来自哪一方（requsetCode），再验证是什么结果（resultCode）
-     *
+     * 接收来自上一个Fragment的数据
+     * 先验证结果来自哪一方（requestCode），再验证是什么结果（resultCode）
      * @param requestCode identity who send this result
      * @param resultCode identify the specific result
      * @param data where the data is stored

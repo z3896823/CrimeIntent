@@ -1,4 +1,4 @@
-package org.zyb.criminalintent;
+package org.zyb.criminalintent.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,16 +6,21 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.zyb.criminalintent.CrimePagerActivity;
+import org.zyb.criminalintent.R;
 import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeLab;
+import org.zyb.criminalintent.model.CrimeManager;
 
 import java.util.List;
 
@@ -37,6 +42,12 @@ public class CrimeListFragment extends Fragment {
 
     private CrimeAdapter adapter;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -47,8 +58,8 @@ public class CrimeListFragment extends Fragment {
 
         rv_crimeList.setLayoutManager(layoutManager);
 
-        CrimeLab crimeLab = CrimeLab.getCrimeLab(getActivity());
-        List<Crime> crimeList = crimeLab.getCrimeList();
+        CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+        List<Crime> crimeList = crimeManager.getCrimeList();
         adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
 
@@ -59,6 +70,29 @@ public class CrimeListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        //注意这个Inflater是menuInflater，不是之前用的Inflater
+        inflater.inflate(R.menu.item_list_fragment,menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.id_menu_add:
+                Crime crime = new Crime();
+                CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+                crimeManager.addCrime(crime);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getUuid());
+                startActivity(intent);
+                break;
+            default:
+                break;
+        }
+        return true;
     }
 
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeAdapter.CrimeHolder>{
@@ -77,8 +111,8 @@ public class CrimeListFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
-//                    Intent intent = CrimeDetailActivity.newIntent(getActivity(),crimeList.get(position).getId());
-                    Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getId());
+//                    Intent intent = CrimeDetailActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
+                    Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
                     startActivity(intent);
                 }
             });
@@ -91,6 +125,14 @@ public class CrimeListFragment extends Fragment {
                 }
             });
 
+            holder.cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    int position = holder.getAdapterPosition();
+                    Crime crime = crimeList.get(position);
+                    crime.setSolved(isChecked);
+                }
+            });
 
             return holder;
         }
@@ -108,6 +150,7 @@ public class CrimeListFragment extends Fragment {
             return crimeList.size();
         }
 
+
         class CrimeHolder extends RecyclerView.ViewHolder{
 
             TextView tv_title;
@@ -121,7 +164,6 @@ public class CrimeListFragment extends Fragment {
                 cb_isSolved = (CheckBox) itemView.findViewById(R.id.id_cb_isSolved);
             }
         }
-
     }
 
 }
