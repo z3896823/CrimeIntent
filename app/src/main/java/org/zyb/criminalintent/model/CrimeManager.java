@@ -3,6 +3,7 @@ package org.zyb.criminalintent.model;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import org.zyb.criminalintent.database.CrimeDBHelper;
 import org.zyb.criminalintent.database.CursorParser;
@@ -10,6 +11,7 @@ import org.zyb.criminalintent.util.Utility;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +36,7 @@ public class CrimeManager {
 
     private static CrimeManager sCrimeManager; // memory leak here
 
-    private List<Crime> crimeList;
+    private List<Crime> crimeList = new ArrayList<>();
 
     private Context mContext;// an application level context
 
@@ -63,17 +65,21 @@ public class CrimeManager {
     }
 
     public List<Crime> getCrimeList(){
-        // query database here
-        Cursor cursor = crimeDB.rawQuery("select * from Crime",null);
-        crimeList = CursorParser.getCrimeList(cursor);
-        //首次载入时进行列表的初始化，但是该初始化并未向数据库写入数据
-        if (crimeList.isEmpty()){
-            Crime crime = new Crime();
-            crime.setTitle("this is a title");
-            crime.setDate(Utility.getNowTime());
-            crime.setSolved(true);
-            crimeList.add(crime);
+        if (crimeList.isEmpty()) {
+            // query database here
+            Cursor cursor = crimeDB.rawQuery("select * from Crime",null);
+            crimeList = CursorParser.getCrimeList(cursor);
+            //首次载入时进行列表的初始化，但是该初始化并未向数据库写入数据
+            if (crimeList.isEmpty()){
+                Crime crime = new Crime();
+                crime.setTitle("this is a title");
+                crime.setDate(Utility.getNowTime());
+                crime.setSolved(true);
+                crimeList.add(crime);
+            }
+            Log.d("ybz", "getCrimeList: create List");
         }
+        Log.d("ybz", "getCrimeList: ");
         return crimeList;
     }
     //增
@@ -81,7 +87,6 @@ public class CrimeManager {
         // add into database and query again
         UUID uuid = crime.getUuid();
         String title = crime.getTitle();
-
         String date = crime.getDate();
 
         if (crime.getSolved()) {
@@ -103,10 +108,7 @@ public class CrimeManager {
     }
     //查
     public Crime getCrime(UUID uuid) {
-        // 很明显，getCrime前必须先getCrimeList
-        if (crimeList == null){
-            crimeList = getCrimeList();
-        }
+        //这里不要在调用getCrimeList
         for (Crime crime : crimeList) {
             if (crime.getUuid().equals(uuid)) {
                 return crime;

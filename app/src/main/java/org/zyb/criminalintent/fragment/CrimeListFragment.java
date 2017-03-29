@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,8 +61,7 @@ public class CrimeListFragment extends Fragment {
 
         rv_crimeList.setLayoutManager(layoutManager);
 
-        CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
-        crimeList = crimeManager.getCrimeList();
+        crimeList = CrimeManager.getCrimeManager(getActivity()).getCrimeList();
         adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
 
@@ -72,6 +72,7 @@ public class CrimeListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         adapter.notifyDataSetChanged();
+        Log.d(TAG, "onResume: ");
     }
 
     @Override
@@ -116,6 +117,8 @@ public class CrimeListFragment extends Fragment {
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
                     Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
+                    Log.d(TAG, "list: "+ crimeList.get(position).toString());
+                    Log.d(TAG, "list: "+ crimeList.get(position).hashCode());
                     startActivity(intent);
                 }
             });

@@ -54,6 +54,7 @@ public class CrimePagerActivity extends AppCompatActivity {
             @Override
             public Fragment getItem(int position) {
                 Crime crime = crimeList.get(position);
+                //根据Fragment的特性，每次会实例化三个Fragment，先实例化本身，在分别实例化左边和右边的
                 return CrimeDetailFragment.newInstance(crime.getUuid());
             }
 

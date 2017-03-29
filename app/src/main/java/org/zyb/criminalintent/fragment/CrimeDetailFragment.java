@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,7 +64,9 @@ public class CrimeDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
-        crime = crimeManager.getCrime(crimeId);//成功获取到Crime对象
+        crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
+        Log.d(TAG, "detail: "+ crime.toString());
+        Log.d(TAG, "detail: "+ crime.hashCode());
     }
 
     @Override
