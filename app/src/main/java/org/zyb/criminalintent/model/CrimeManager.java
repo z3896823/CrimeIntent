@@ -22,23 +22,23 @@ import java.util.logging.SimpleFormatter;
  *     author : zyb
  *     e-mail : hbdxzyb@hotmail.com
  *     time   : 2017/03/16
- *     desc   : 模型类的控制类，使用单例模式
- *     version: 1.0
+ *     desc   : 模型类的控制类，使用单例模式，作为程序与数据库沟通的桥梁，负责维护数据库中的数据和内存中的数据的一致性
+ *     version: 2.0
  * </pre>
  *
  * 注意，这里的设计是想把该类对象作为单例，但是其他方法却是通过对象调用的方式来访问
  * 注意到只有getCrimeLab是静态方法，另外两个get不是静态的，必须通过对象来调用
  *
- * 在本demo中，当数据发生变化时，永远是先更新数据(先set)，再获取数据(get),而不是直接使用更改过的数据
+ * 该类对数据库提交程序对数据的修改，同时也负责维护内存中数据的变化，保持和数据库的一致性。
+ *
  */
 
 public class CrimeManager {
 
+    private static final String TAG = "ybz";
     private static CrimeManager sCrimeManager; // memory leak here
 
     private List<Crime> crimeList = new ArrayList<>();
-
-    private Context mContext;// an application level context
 
     private SQLiteDatabase crimeDB;
 
@@ -53,7 +53,6 @@ public class CrimeManager {
 
     private CrimeManager(Context context){
         // create or get database here
-        mContext = context.getApplicationContext();
         crimeDB = new CrimeDBHelper(context,DB_NAME,version,createTable).getWritableDatabase();
     }
 
@@ -69,7 +68,8 @@ public class CrimeManager {
             // query database here
             Cursor cursor = crimeDB.rawQuery("select * from Crime",null);
             crimeList = CursorParser.getCrimeList(cursor);
-            //首次载入时进行列表的初始化，但是该初始化并未向数据库写入数据
+            cursor.close();
+            // 如果数据库为空，对列表执行初始化，但是该初始化并不向数据库写入数据
             if (crimeList.isEmpty()){
                 Crime crime = new Crime();
                 crime.setTitle("this is a title");
@@ -77,38 +77,55 @@ public class CrimeManager {
                 crime.setSolved(true);
                 crimeList.add(crime);
             }
-            Log.d("ybz", "getCrimeList: create List");
+            Log.d(TAG, "CrimeList get from database:");
+            for (Crime crime:crimeList){
+                Log.d(TAG, "crime title: "+ crime.getTitle()+ "  uuid: "+crime.getUuid().toString());
+            }
         }
-        Log.d("ybz", "getCrimeList: ");
+
         return crimeList;
     }
-    //增
-    public void addCrime(Crime crime){
-        // add into database and query again
+    /**
+     * 这里要更新内存中的crimeList，有两种方法：
+     * 1. 重新从数据库中读取新的列表
+     * 2. 把新的crime直接添加到内存中的crimeList中去
+     */
+    public UUID addCrime(){
+        // add into database and update crimeList in memory
+        Crime crime = new Crime();
         UUID uuid = crime.getUuid();
-        String title = crime.getTitle();
-        String date = crime.getDate();
-
-        if (crime.getSolved()) {
-            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?)",
-                    new String[]{uuid.toString(),title,date,"1"});
-        } else {
-            crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?) ",
-                    new String[]{uuid.toString(),title,date,"0"});
-        }
-        // 更新crimeList
-        crimeList = getCrimeList();
+        crimeList.add(crime);
+        crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?)",
+                new String[]{uuid.toString(),"",Utility.getNowTime(),"0"});
+        Log.d(TAG, crime.getTitle()+ " is added to database by CrimeManager");
+        return uuid;
     }
-    //删
+
+    /**
+     * 删除数据库后要更新内存中的crimeList，此时有两种情况：
+     * 1. 如果当前crimeList没被GC回收，那么getCrime能够return一个Crime对象回来，将其从crimeList中删除即可
+     * 2. 如果当前crimeList被GC回收了，那么getCrime会重新请求crimeList，此时根据UUID已经get不到已经删除的Crime对象
+     *    所以返回null，不执行任何操作，同时crimeList也已被更新了
+     * @param crimeId
+     */
     public void deleteCrime(UUID crimeId){
         // delete a crime record
-        crimeDB.execSQL("delete from crime where uuid = ?",new String[]{crimeId.toString()});
-        // 更新crimeList
-        crimeList = getCrimeList();
+        Log.d(TAG, "deleteCrime with uuid: "+ crimeId.toString());
+        crimeDB.execSQL("delete from crime where uuid = ? ",new String[]{crimeId.toString()});
+        // 更新内存中的crimeList
+        Crime crime = getCrime(crimeId);
+        if (crime != null){
+            crimeList.remove(crime);
+            Log.d(TAG, crime.getTitle()+ " deleted by CrimeManager");
+        }
     }
+
     //查
     public Crime getCrime(UUID uuid) {
-        //这里不要在调用getCrimeList
+        //为了防止上一个活动被回收后此处出现空指针，先判断下crimeList还在不在内存中
+        if (crimeList.isEmpty()){
+            crimeList = getCrimeList();
+        }
         for (Crime crime : crimeList) {
             if (crime.getUuid().equals(uuid)) {
                 return crime;
@@ -116,9 +133,13 @@ public class CrimeManager {
         }
         return null;
     }
+
     //改title
-    public void changeCrimeTitle(UUID uuid,String s){
-        crimeDB.execSQL("update crime set title = ? where UUID = ?",new String[]{s,uuid.toString()});
+    public void changeCrimeTitle(UUID uuid,String title){
+        crimeDB.execSQL("update crime set title = ? where UUID = ?",new String[]{title,uuid.toString()});
+        //更新内存中的crimeList
+        Crime crime = getCrime(uuid);
+        crime.setTitle(title);
     }
     //改isSolved
     public void changeCrimeSolved(UUID uuid,boolean isSolved){
@@ -127,10 +148,14 @@ public class CrimeManager {
         } else {
             crimeDB.execSQL("update crime set isSolved = ? where UUID = ?",new String[]{"0",uuid.toString()});
         }
+        Crime crime = getCrime(uuid);
+        crime.setSolved(isSolved);
     }
     //改date
     public void changeCrimeDate(UUID uuid,String date){
         crimeDB.execSQL("update Crime set date = ? where UUID = ?",new String[]{date,uuid.toString()});
+        Crime crime = getCrime(uuid);
+        crime.setDate(date);
     }
 
 }

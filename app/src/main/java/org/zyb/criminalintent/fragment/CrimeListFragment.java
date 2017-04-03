@@ -24,6 +24,7 @@ import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeManager;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * <pre>
@@ -41,9 +42,7 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView rv_crimeList;
 
-    private CrimeAdapter adapter;
-
-    private List<Crime> crimeList = null;
+    private CrimeManager crimeManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,8 +60,10 @@ public class CrimeListFragment extends Fragment {
 
         rv_crimeList.setLayoutManager(layoutManager);
 
-        crimeList = CrimeManager.getCrimeManager(getActivity()).getCrimeList();
-        adapter = new CrimeAdapter(crimeList);
+        crimeManager = CrimeManager.getCrimeManager(getActivity());
+
+        List<Crime> crimeList = crimeManager.getCrimeList();
+        CrimeAdapter adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
 
         return view;
@@ -71,8 +72,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        adapter.notifyDataSetChanged();
-        Log.d(TAG, "onResume: ");
+        rv_crimeList.getAdapter().notifyDataSetChanged();
     }
 
     @Override
@@ -86,11 +86,9 @@ public class CrimeListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.id_menu_add:
-                Crime crime = new Crime();
-                CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
-                //先向数据库提交这个新的对象，然后再去DetailFragment中具体修改这个对象
-                crimeManager.addCrime(crime);
-                Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getUuid());
+                // 告诉CrimeManager我要添加一个对象，并返回给我新建对象的UUID
+                UUID uuid = crimeManager.addCrime();//返回新生成的Crime对象的UUID
+                Intent intent = CrimePagerActivity.newIntent(getActivity(),uuid);
                 startActivity(intent);
                 break;
             default:
@@ -117,19 +115,10 @@ public class CrimeListFragment extends Fragment {
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
                     Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
-                    Log.d(TAG, "list: "+ crimeList.get(position).toString());
-                    Log.d(TAG, "list: "+ crimeList.get(position).hashCode());
                     startActivity(intent);
                 }
             });
 
-            holder.tv_title.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int position = holder.getAdapterPosition();
-                    Toast.makeText(getActivity(), crimeList.get(position).getTitle(), Toast.LENGTH_SHORT).show();
-                }
-            });
 
             holder.cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -138,7 +127,7 @@ public class CrimeListFragment extends Fragment {
                     Crime crime = crimeList.get(position);
                     crime.setSolved(isChecked);
                     //向数据库提交数据
-                    CrimeManager.getCrimeManager(getActivity()).changeCrimeSolved(crime.getUuid(),crime.getSolved());
+                    crimeManager.changeCrimeSolved(crime.getUuid(),crime.getSolved());
                 }
             });
 

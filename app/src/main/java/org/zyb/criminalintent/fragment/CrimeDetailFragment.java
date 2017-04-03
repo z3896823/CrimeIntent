@@ -9,6 +9,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -16,12 +19,15 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
+import org.zyb.criminalintent.CrimePagerActivity;
 import org.zyb.criminalintent.R;
 import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeManager;
 import org.zyb.criminalintent.util.Utility;
 
+import java.security.cert.CertSelector;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -63,10 +69,10 @@ public class CrimeDetailFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
         crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
-        Log.d(TAG, "detail: "+ crime.toString());
-        Log.d(TAG, "detail: "+ crime.hashCode());
+        Log.d(TAG, "detailFragment of "+ crime.getTitle()+" is created");
     }
 
     @Override
@@ -79,14 +85,10 @@ public class CrimeDetailFragment extends Fragment {
         et_title.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
             }
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                crime.setTitle(s.toString());
             }
-
             @Override
             public void afterTextChanged(Editable s) {
                 //向数据库提交
@@ -120,8 +122,14 @@ public class CrimeDetailFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "detailFragment of "+crime.getTitle()+ " is destroyed");
+    }
+
     /**
-     * 接收来自上一个Fragment的数据
+     * 接收来自DatePickerFragment的数据
      * 先验证结果来自哪一方（requestCode），再验证是什么结果（resultCode）
      * @param requestCode identity who send this result
      * @param resultCode identify the specific result
@@ -129,15 +137,38 @@ public class CrimeDetailFragment extends Fragment {
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != 1){
-            return;
+        if (requestCode == 1){
+            switch (resultCode){
+                case DatePickerFragment.RESULT_OK:
+                    Date date = (Date) data.getSerializableExtra("crimeDate");
+                    crimeManager.changeCrimeDate(crime.getUuid(),Utility.dateToString(date));
+                    //由于btn不属于编辑型控件，需要手动更新其内容
+                    btn_crimeDate.setText(crime.getDate());
+                    break;
+                default:
+                    break;
+            }
         }
-        if (resultCode == DatePickerFragment.RESULT_OK){
-            Date date = (Date) data.getSerializableExtra("crimeDate");
-            crime.setDate(Utility.dateToString(date));
-            btn_crimeDate.setText(crime.getDate());
-            //向数据库提交
-            crimeManager.changeCrimeDate(crime.getUuid(),crime.getDate());
+    }
+
+    // create menu
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.item_detail_fragment,menu);
+    }
+
+    // menu item clicked
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.id_menu_delete:
+                CrimePagerActivity crimePagerActivity = ((CrimePagerActivity)getActivity());
+                crimePagerActivity.onItemDeleted(crime.getUuid());
+                break;
+            default:
+                break;
         }
+        return true;
     }
 }

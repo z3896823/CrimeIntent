@@ -7,8 +7,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import org.zyb.criminalintent.fragment.CrimeDetailFragment;
 import org.zyb.criminalintent.model.Crime;
@@ -29,9 +31,10 @@ import java.util.UUID;
 
 public class CrimePagerActivity extends AppCompatActivity {
 
+    private static final String TAG = "ybz";
     private ViewPager vp_container;
 
-    private List<Crime> crimeList;
+    private CrimeManager crimeManager;
 
     public static Intent newIntent(Context context, UUID uuid){
         Intent intent = new Intent(context,CrimePagerActivity.class);
@@ -44,17 +47,18 @@ public class CrimePagerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crimepager);
 
+        crimeManager = CrimeManager.getCrimeManager(this);
         vp_container = (ViewPager) findViewById(R.id.id_vp_container);
 
-        crimeList = CrimeManager.getCrimeManager(this).getCrimeList();
-
+        // create adapter
         FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentStatePagerAdapter adapter = new FragmentStatePagerAdapter(fragmentManager) {
 
-        vp_container.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
+            List<Crime> crimeList = crimeManager.getCrimeList();
+
             @Override
             public Fragment getItem(int position) {
                 Crime crime = crimeList.get(position);
-                //根据Fragment的特性，每次会实例化三个Fragment，先实例化本身，在分别实例化左边和右边的
                 return CrimeDetailFragment.newInstance(crime.getUuid());
             }
 
@@ -62,14 +66,32 @@ public class CrimePagerActivity extends AppCompatActivity {
             public int getCount() {
                 return crimeList.size();
             }
-        });
 
+            @Override
+            public int getItemPosition(Object object){
+                return PagerAdapter.POSITION_NONE;
+            }
+        };
+        vp_container.setAdapter(adapter);
+
+        // tell viewPager where to start
         UUID crimeId = (UUID) getIntent().getSerializableExtra("crimeId");
+        List<Crime> crimeList = crimeManager.getCrimeList();
         for (int i = 0; i<crimeList.size();i++){
             if (crimeList.get(i).getUuid().equals(crimeId)){
                 vp_container.setCurrentItem(i);
                 break;
             }
         }
+
+    }
+
+    /**
+     * 当某条目被删除后，通知adapter
+     * @param uuid 要删除的item的UUID
+     */
+    public void onItemDeleted(UUID uuid){
+        crimeManager.deleteCrime(uuid);
+        vp_container.getAdapter().notifyDataSetChanged();
     }
 }
