@@ -1,6 +1,7 @@
 package org.zyb.criminalintent.fragment;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,13 +14,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.zyb.criminalintent.CrimePagerActivity;
 import org.zyb.criminalintent.R;
+import org.zyb.criminalintent.database.CursorParser;
 import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeManager;
 
@@ -66,12 +70,55 @@ public class CrimeListFragment extends Fragment {
         CrimeAdapter adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
 
+        //test
+        final EditText et_title = (EditText) view.findViewById(R.id.id_et_title);
+        Button btn_del = (Button) view.findViewById(R.id.id_btn_delete);
+        Button btn_queryMemory = (Button) view.findViewById(R.id.id_btn_queryMemory);
+        Button btn_queryDatabase = (Button) view.findViewById(R.id.id_btn_queryDatabase);
+        final TextView tv_result = (TextView) view.findViewById(R.id.id_tv_result);
+
+        btn_del.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Crime crime = crimeManager.getCrime(et_title.getText().toString());
+                crimeManager.deleteCrime(crime.getUuid());
+                rv_crimeList.getAdapter().notifyDataSetChanged();
+            }
+        });
+
+        btn_queryMemory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Crime> crimeList = crimeManager.getCrimeList();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Memory:");
+                for (int i = 0;i<crimeList.size();i++){
+                    sb.append(crimeList.get(i).getTitle());
+                }
+                tv_result.setText(sb);
+            }
+        });
+
+        btn_queryDatabase.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Crime> crimeList1 = crimeManager.getCrimeListFromDB();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Database:");
+                for (int i = 0;i<crimeList1.size();i++){
+                    sb.append(crimeList1.get(i).getTitle());
+                }
+                tv_result.setText(sb);
+            }
+        });
+
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Log.d(TAG, "CrimeListFragment onResumed");
         rv_crimeList.getAdapter().notifyDataSetChanged();
     }
 

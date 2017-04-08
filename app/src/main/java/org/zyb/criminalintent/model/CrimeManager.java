@@ -63,8 +63,16 @@ public class CrimeManager {
         return sCrimeManager;
     }
 
+    //强制从数据库取数据
+    public List<Crime> getCrimeListFromDB(){
+        Cursor cursor = crimeDB.rawQuery("select * from Crime",null);
+        List<Crime> crimeList1 = CursorParser.getCrimeList(cursor);
+        cursor.close();
+        return crimeList1;
+    }
+
     public List<Crime> getCrimeList(){
-        if (crimeList.isEmpty()) {
+        if (crimeList.size() == 0) {
             // query database here
             Cursor cursor = crimeDB.rawQuery("select * from Crime",null);
             crimeList = CursorParser.getCrimeList(cursor);
@@ -88,17 +96,16 @@ public class CrimeManager {
     /**
      * 这里要更新内存中的crimeList，有两种方法：
      * 1. 重新从数据库中读取新的列表
-     * 2. 把新的crime直接添加到内存中的crimeList中去
+     * 2. 把新的crime直接添加到内存中的crimeList中去（选用）
      */
     public UUID addCrime(){
         // add into database and update crimeList in memory
         Crime crime = new Crime();
-        UUID uuid = crime.getUuid();
         crimeList.add(crime);
         crimeDB.execSQL("insert into Crime (UUID, title, date ,isSolved) values (?,?,?,?)",
-                new String[]{uuid.toString(),"",Utility.getNowTime(),"0"});
+                new String[]{crime.getUuid().toString(),"",crime.getDate(),"0"});
         Log.d(TAG, crime.getTitle()+ " is added to database by CrimeManager");
-        return uuid;
+        return crime.getUuid();
     }
 
     /**
@@ -110,24 +117,34 @@ public class CrimeManager {
      */
     public void deleteCrime(UUID crimeId){
         // delete a crime record
-        Log.d(TAG, "deleteCrime with uuid: "+ crimeId.toString());
         crimeDB.execSQL("delete from crime where uuid = ? ",new String[]{crimeId.toString()});
         // 更新内存中的crimeList
         Crime crime = getCrime(crimeId);
-        if (crime != null){
-            crimeList.remove(crime);
-            Log.d(TAG, crime.getTitle()+ " deleted by CrimeManager");
-        }
+        crimeList.remove(crime);
+    }
+    public void deleteCrime(String title){
+        crimeDB.execSQL("delete from crime where title = ? ",new String[]{title});
+        Crime crime = getCrime(title);
+        crimeList.remove(crime);
     }
 
     //查
     public Crime getCrime(UUID uuid) {
         //为了防止上一个活动被回收后此处出现空指针，先判断下crimeList还在不在内存中
-        if (crimeList.isEmpty()){
+        if (crimeList == null){
             crimeList = getCrimeList();
         }
         for (Crime crime : crimeList) {
             if (crime.getUuid().equals(uuid)) {
+                return crime;
+            }
+        }
+        return null;
+    }
+
+    public Crime getCrime(String title){
+        for (Crime crime:crimeList){
+            if (crime.getTitle().equals(title)){
                 return crime;
             }
         }
@@ -140,6 +157,7 @@ public class CrimeManager {
         //更新内存中的crimeList
         Crime crime = getCrime(uuid);
         crime.setTitle(title);
+        Log.d(TAG, uuid.toString()+ "   title change to:   "+ title);
     }
     //改isSolved
     public void changeCrimeSolved(UUID uuid,boolean isSolved){

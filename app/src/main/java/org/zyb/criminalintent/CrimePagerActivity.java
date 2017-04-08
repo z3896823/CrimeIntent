@@ -11,6 +11,9 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import org.zyb.criminalintent.fragment.CrimeDetailFragment;
 import org.zyb.criminalintent.model.Crime;
@@ -34,7 +37,9 @@ public class CrimePagerActivity extends AppCompatActivity {
     private static final String TAG = "ybz";
     private ViewPager vp_container;
 
-    private CrimeManager crimeManager;
+    private CrimeManager crimeManager ;
+
+    private List<Crime> crimeList;
 
     public static Intent newIntent(Context context, UUID uuid){
         Intent intent = new Intent(context,CrimePagerActivity.class);
@@ -48,13 +53,12 @@ public class CrimePagerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_crimepager);
 
         crimeManager = CrimeManager.getCrimeManager(this);
+        crimeList = crimeManager.getCrimeList();
         vp_container = (ViewPager) findViewById(R.id.id_vp_container);
 
         // create adapter
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentStatePagerAdapter adapter = new FragmentStatePagerAdapter(fragmentManager) {
-
-            List<Crime> crimeList = crimeManager.getCrimeList();
 
             @Override
             public Fragment getItem(int position) {
@@ -83,11 +87,10 @@ public class CrimePagerActivity extends AppCompatActivity {
                 break;
             }
         }
-
     }
 
     /**
-     * 当某条目被删除后，通知adapter
+     * 当一页Pager被删除后，通知adapter
      * @param uuid 要删除的item的UUID
      */
     public void onItemDeleted(UUID uuid){

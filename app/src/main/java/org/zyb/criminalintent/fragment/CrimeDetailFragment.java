@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import org.zyb.criminalintent.CrimePagerActivity;
 import org.zyb.criminalintent.R;
@@ -25,9 +26,7 @@ import org.zyb.criminalintent.model.Crime;
 import org.zyb.criminalintent.model.CrimeManager;
 import org.zyb.criminalintent.util.Utility;
 
-import java.security.cert.CertSelector;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,7 +34,7 @@ import java.util.UUID;
  *     author : zyb
  *     e-mail : hbdxzyb@hotmail.com
  *     time   : 2017/03/16
- *     desc   : 显示item的detail
+ *     desc   : 该Fragment显示item的detail，并配合CrimePagerActivity，使用ViewPager
  *     version: 1.0
  * </pre>
  */
@@ -48,6 +47,8 @@ public class CrimeDetailFragment extends Fragment {
     private EditText et_title;
     private Button btn_crimeDate;
     private CheckBox cb_isSolved;
+    private Button btn_suspect;
+    private Button btn_report;
 
     public CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
 
@@ -60,15 +61,19 @@ public class CrimeDetailFragment extends Fragment {
     public static CrimeDetailFragment newInstance(UUID uuid){
         Bundle bundle = new Bundle();
         bundle.putSerializable("crimeId",uuid);
-
+        Log.d(TAG, "detailFragment of "+ uuid+ " is creating");
         CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
         crimeDetailFragment.setArguments(bundle);
         return crimeDetailFragment;
     }
 
+    /**
+     * 根据argument得到UUID，然后从crimeList中索引到具体的Crime对象
+     * @param savedInstanceState null
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(null);
         setHasOptionsMenu(true);
         UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
         crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
@@ -77,25 +82,36 @@ public class CrimeDetailFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_crime,container,false);
+
+        View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
 
         et_title = (EditText) v.findViewById(R.id.id_et_title);
         et_title.setText(crime.getTitle());
-        et_title.setSelection(et_title.getText().length());
-        et_title.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-            @Override
-            public void afterTextChanged(Editable s) {
-                //向数据库提交
-                crimeManager.changeCrimeTitle(crime.getUuid(),s.toString());
-            }
-        });
+        TextView tv_title = (TextView) v.findViewById(R.id.id_tv_title);
+        tv_title.setText(crime.getTitle());
+        //如果Crime的标题不为空，则此时为查看模式，隐藏编辑框
+        if (crime.getTitle() != null && !crime.getTitle().isEmpty()){
+            et_title.setVisibility(View.GONE);
+        } else {
+            tv_title.setVisibility(View.GONE);
+        }
 
+//        et_title.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//            }
+//            @Override
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//            }
+//            @Override
+//            public void afterTextChanged(Editable s) {
+//                //向数据库提交
+//                crimeManager.changeCrimeTitle(crime.getUuid(),s.toString());
+//            }
+//        });
+
+        //选择日期的btn，将会弹出DatePicker
+        // DatePicker button
         btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
         btn_crimeDate.setText(crime.getDate());
         btn_crimeDate.setOnClickListener(new View.OnClickListener() {
@@ -108,6 +124,7 @@ public class CrimeDetailFragment extends Fragment {
             }
         });
 
+        // checkBox
         cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
         cb_isSolved.setChecked(crime.getSolved());
         cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -123,13 +140,30 @@ public class CrimeDetailFragment extends Fragment {
     }
 
     @Override
+    public void onPause(){
+        //如果编辑框可见，则此时在添加数据，那么获取编辑框内容对数据进行更新
+        if (et_title.getVisibility()!=View.GONE) {
+            String newTitle = et_title.getText().toString();
+            crimeManager.changeCrimeTitle(crime.getUuid(),newTitle);
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(null);
+    }
+
+
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "detailFragment of "+crime.getTitle()+ " is destroyed");
+        Log.d(TAG, "detailFragment of "+crime.getUuid()+ " is destroyed");
     }
 
     /**
-     * 接收来自DatePickerFragment的数据
+     * 接收来自DatePicker的数据
      * 先验证结果来自哪一方（requestCode），再验证是什么结果（resultCode）
      * @param requestCode identity who send this result
      * @param resultCode identify the specific result
