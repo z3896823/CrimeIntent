@@ -36,7 +36,7 @@ import java.util.logging.SimpleFormatter;
 public class CrimeManager {
 
     private static final String TAG = "ybz";
-    private static CrimeManager sCrimeManager; // memory leak here
+    private static CrimeManager mCrimeManager; // memory leak here
 
     private List<Crime> crimeList = new ArrayList<>();
 
@@ -51,16 +51,25 @@ public class CrimeManager {
             "date text," +
             "isSolved int)";
 
+    /**
+     * 构造函数
+     * @param context
+     */
     private CrimeManager(Context context){
         // create or get database here
         crimeDB = new CrimeDBHelper(context,DB_NAME,version,createTable).getWritableDatabase();
     }
 
+    /**
+     * 单例的入口
+     * @param context
+     * @return
+     */
     public static CrimeManager getCrimeManager(Context context){
-        if (sCrimeManager == null){
-            sCrimeManager = new CrimeManager(context);
+        if (mCrimeManager == null){
+            mCrimeManager = new CrimeManager(context);
         }
-        return sCrimeManager;
+        return mCrimeManager;
     }
 
     //强制从数据库取数据
@@ -71,6 +80,11 @@ public class CrimeManager {
         return crimeList1;
     }
 
+    /**
+     * 获取CrimeList
+     * 首次从数据库中读取，之后返回内存中的数据
+     * @return crimeList
+     */
     public List<Crime> getCrimeList(){
         if (crimeList.size() == 0) {
             // query database here
@@ -93,10 +107,10 @@ public class CrimeManager {
 
         return crimeList;
     }
+
     /**
-     * 这里要更新内存中的crimeList，有两种方法：
-     * 1. 重新从数据库中读取新的列表
-     * 2. 把新的crime直接添加到内存中的crimeList中去（选用）
+     * 创建新的Crime对象，并同步更新数据库和内存中的数据
+     * @return UUID of new Crime
      */
     public UUID addCrime(){
         // add into database and update crimeList in memory
@@ -108,27 +122,24 @@ public class CrimeManager {
         return crime.getUuid();
     }
 
+
     /**
-     * 删除数据库后要更新内存中的crimeList，此时有两种情况：
-     * 1. 如果当前crimeList没被GC回收，那么getCrime能够return一个Crime对象回来，将其从crimeList中删除即可
-     * 2. 如果当前crimeList被GC回收了，那么getCrime会重新请求crimeList，此时根据UUID已经get不到已经删除的Crime对象
-     *    所以返回null，不执行任何操作，同时crimeList也已被更新了
-     * @param crimeId
+     * 根据UUID删除Crime对象
+     * @param uuid
      */
-    public void deleteCrime(UUID crimeId){
-        // delete a crime record
-        crimeDB.execSQL("delete from crime where uuid = ? ",new String[]{crimeId.toString()});
+    public void deleteCrime(UUID uuid){
+        // 删除数据库中的数据
+        crimeDB.execSQL("delete from crime where uuid = ? ",new String[]{uuid.toString()});
         // 更新内存中的crimeList
-        Crime crime = getCrime(crimeId);
-        crimeList.remove(crime);
-    }
-    public void deleteCrime(String title){
-        crimeDB.execSQL("delete from crime where title = ? ",new String[]{title});
-        Crime crime = getCrime(title);
+        Crime crime = getCrime(uuid);
         crimeList.remove(crime);
     }
 
-    //查
+    /**
+     * 根据UUID查询列表中的Crime对象并返回
+     * @param uuid
+     * @return
+     */
     public Crime getCrime(UUID uuid) {
         //为了防止上一个活动被回收后此处出现空指针，先判断下crimeList还在不在内存中
         if (crimeList == null){
@@ -142,6 +153,11 @@ public class CrimeManager {
         return null;
     }
 
+    /**
+     * 根据title查询列表中的Crime对象并返回
+     * @param title
+     * @return
+     */
     public Crime getCrime(String title){
         for (Crime crime:crimeList){
             if (crime.getTitle().equals(title)){
@@ -151,7 +167,11 @@ public class CrimeManager {
         return null;
     }
 
-    //改title
+    /**
+     * 根据UUID更改对应对象的title
+     * @param uuid
+     * @param title
+     */
     public void changeCrimeTitle(UUID uuid,String title){
         crimeDB.execSQL("update crime set title = ? where UUID = ?",new String[]{title,uuid.toString()});
         //更新内存中的crimeList
@@ -159,7 +179,12 @@ public class CrimeManager {
         crime.setTitle(title);
         Log.d(TAG, uuid.toString()+ "   title change to:   "+ title);
     }
-    //改isSolved
+
+    /**
+     * 根据UUID更改对应对象的isSolved状态
+     * @param uuid
+     * @param isSolved
+     */
     public void changeCrimeSolved(UUID uuid,boolean isSolved){
         if (isSolved){
             crimeDB.execSQL("update crime set isSolved = ? where UUID = ?",new String[]{"1",uuid.toString()});
@@ -169,7 +194,12 @@ public class CrimeManager {
         Crime crime = getCrime(uuid);
         crime.setSolved(isSolved);
     }
-    //改date
+
+    /**
+     * 根据UUID更改对应对象的date
+     * @param uuid
+     * @param date
+     */
     public void changeCrimeDate(UUID uuid,String date){
         crimeDB.execSQL("update Crime set date = ? where UUID = ?",new String[]{date,uuid.toString()});
         Crime crime = getCrime(uuid);

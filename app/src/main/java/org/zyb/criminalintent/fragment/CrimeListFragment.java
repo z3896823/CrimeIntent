@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -61,7 +62,6 @@ public class CrimeListFragment extends Fragment {
         rv_crimeList = (RecyclerView) view.findViewById(R.id.id_rv_crimeList);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-
         rv_crimeList.setLayoutManager(layoutManager);
 
         crimeManager = CrimeManager.getCrimeManager(getActivity());
@@ -71,6 +71,7 @@ public class CrimeListFragment extends Fragment {
         rv_crimeList.setAdapter(adapter);
 
         //test
+        /*
         final EditText et_title = (EditText) view.findViewById(R.id.id_et_title);
         Button btn_del = (Button) view.findViewById(R.id.id_btn_delete);
         Button btn_queryMemory = (Button) view.findViewById(R.id.id_btn_queryMemory);
@@ -111,6 +112,7 @@ public class CrimeListFragment extends Fragment {
                 tv_result.setText(sb);
             }
         });
+        */
 
         return view;
     }

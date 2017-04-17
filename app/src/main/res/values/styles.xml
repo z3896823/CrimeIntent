@@ -2,10 +2,31 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!--覆盖父style中对Button的设置-->
+        <!--<item name="android:buttonStyle">@style/customButton</item>-->
+    </style>
+
+    <!--自定义style-->
+    <style name="crimeStyle">
+        <item name="android:background">@color/colorAccent</item>
+    </style>
+
+    <!--自定义继承style-->
+    <!--该style将拥有父style的background属性-->
+    <style name="crimeStyle.hierachy">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!--自定义Button主题-->
+    <style name="customButton" parent="android:style/Widget.Holo.Button">
+        <item name="android:background">@drawable/custom_btn_bg</item>
+    </style>
+
+    <style name="BeatBoxButton" parent="android:style/Widget.Holo.Button">
+        <item name="android:background">@drawable/button_beat_box</item>
     </style>
 
 </resources>

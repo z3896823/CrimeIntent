@@ -11,44 +11,44 @@
         android:layout_weight="3"
         />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:orientation="vertical">
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:layout_weight="2"-->
+        <!--android:orientation="vertical">-->
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:orientation="horizontal">-->
 
-            <EditText
-                android:id="@+id/id_et_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:hint="title"/>
-            <Button
-                android:id="@+id/id_btn_delete"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="del"/>
+            <!--<EditText-->
+                <!--android:id="@+id/id_et_title"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:hint="title"/>-->
+            <!--<Button-->
+                <!--android:id="@+id/id_btn_delete"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="del"/>-->
 
-            <Button
-                android:id="@+id/id_btn_queryMemory"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Querymemory"/>
-            <Button
-                android:id="@+id/id_btn_queryDatabase"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="querydatabase"/>
-        </LinearLayout>
+            <!--<Button-->
+                <!--android:id="@+id/id_btn_queryMemory"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="Querymemory"/>-->
+            <!--<Button-->
+                <!--android:id="@+id/id_btn_queryDatabase"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="querydatabase"/>-->
+        <!--</LinearLayout>-->
 
-        <TextView
-            android:id="@+id/id_tv_result"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </LinearLayout>
+        <!--<TextView-->
+            <!--android:id="@+id/id_tv_result"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent" />-->
+    <!--</LinearLayout>-->
 
 </LinearLayout>
