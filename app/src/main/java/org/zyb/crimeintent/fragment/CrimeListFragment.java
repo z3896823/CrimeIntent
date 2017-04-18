@@ -133,7 +133,9 @@ public class CrimeListFragment extends Fragment {
         switch (item.getItemId()){
             case R.id.id_menu_add:
                 Crime crime = new Crime();
+                Log.d(TAG, "before add into db new crime id is :" + crime.getId());
                 crimeManager.addCrime(crime);//greendao会不会自动创建id？
+                Log.d(TAG, "after add into db new crime id is :" + crime.getId());
                 Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getId());
                 startActivity(intent);
                 break;

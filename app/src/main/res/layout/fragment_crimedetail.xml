@@ -13,16 +13,33 @@
         android:text="title"
         style="?android:listSeparatorTextViewStyle"/>
 
-    <EditText
-        android:id="@+id/id_et_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_crime_title"/>
-
     <TextView
         android:id="@+id/id_tv_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="crime title"
+        android:textSize="20sp"/>
+
+    <LinearLayout
+        android:id="@+id/id_ll_edit"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/id_et_title"
+            android:layout_width="0dp"
+            android:layout_weight="5"
+            android:layout_height="match_parent"
+            android:hint="@string/hint_crime_title"/>
+
+        <Button
+            android:id="@+id/id_btn_enter"
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="match_parent"
+            android:text="enter"/>
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
@@ -42,16 +59,16 @@
         android:layout_height="wrap_content"
         android:text="Solved"/>
 
-    <!--<Button-->
-        <!--android:id="@+id/id_btn_suspect"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="choose suspect"/>-->
+    <Button
+        android:id="@+id/id_btn_suspect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="choose suspect"/>
 
-    <!--<Button-->
-        <!--android:id="@+id/id_btn_report"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Send crime report"/>-->
+    <Button
+        android:id="@+id/id_btn_report"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send crime report"/>
 
 </LinearLayout>

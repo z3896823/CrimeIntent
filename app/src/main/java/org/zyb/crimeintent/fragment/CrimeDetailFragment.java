@@ -1,5 +1,6 @@
 package org.zyb.crimeintent.fragment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -12,10 +13,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.zyb.crimeintent.CrimePagerActivity;
@@ -48,6 +51,11 @@ public class CrimeDetailFragment extends Fragment {
     private Button btn_suspect;
     private Button btn_report;
 
+    private TextView tv_title;
+
+    private Button btn_enter;
+
+
     public CrimeManager crimeManager;
 
     /**
@@ -75,36 +83,50 @@ public class CrimeDetailFragment extends Fragment {
         crimeManager = CrimeManager.getCrimeManager();
         Long id = getArguments().getLong("crimeId");
         crime = crimeManager.getCrimeById(id);//成功获取到Crime对象
+        Log.d(TAG, "detailFragment of "+crime.getId()+ " is created");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
+        v.setSaveEnabled(false);
 
+        // init widget
+        tv_title = (TextView) v.findViewById(R.id.id_tv_title);
+        final LinearLayout ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
         et_title = (EditText) v.findViewById(R.id.id_et_title);
-        et_title.setText(crime.getTitle());
-        TextView tv_title = (TextView) v.findViewById(R.id.id_tv_title);
-        tv_title.setText(crime.getTitle());
-        //如果Crime的标题不为空，则此时为查看模式，隐藏编辑框
-        if (crime.getTitle() != null && !crime.getTitle().isEmpty()){
-            et_title.setVisibility(View.GONE);
-        } else {
-            tv_title.setVisibility(View.GONE);
-        }
+        btn_enter = (Button) v.findViewById(R.id.id_btn_enter);
 
-//        et_title.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//            }
-//            @Override
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//            }
-//            @Override
-//            public void afterTextChanged(Editable s) {
-//                //向数据库提交
-//                crimeManager.changeCrimeTitle(crime.getUuid(),s.toString());
-//            }
-//        });
+        //浏览模式
+        tv_title.setText(crime.getTitle());
+        tv_title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 隐藏TextView，显示EditText和Button，并弹出软键盘
+                tv_title.setVisibility(View.GONE);
+                ll_edit.setVisibility(View.VISIBLE);
+                et_title.setText(tv_title.getText());
+                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.showSoftInput(et_title, 0);
+            }
+        });
+
+        // 编辑模式
+        et_title.setText(crime.getTitle());
+        btn_enter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String newTitle = et_title.getText().toString();
+                crime.setTitle(newTitle);
+                crimeManager.updateCrime(crime);
+                ll_edit.setVisibility(View.GONE);
+                tv_title.setVisibility(View.VISIBLE);
+                tv_title.setText(et_title.getText());
+            }
+        });
+        // 默认将编辑控件隐藏，编辑时才显示
+        ll_edit.setVisibility(View.GONE);
+
 
         //选择日期的btn，将会弹出DatePicker
         // DatePicker button

@@ -75,7 +75,7 @@ public class CrimePagerActivity extends AppCompatActivity {
         vp_container.setAdapter(adapter);
 
         // setCurrentItem
-        Long id = getIntent().getLongExtra("id",0);
+        Long id = getIntent().getLongExtra("crimeId",0);
         for (int i = 0; i<crimeList.size();i++){
             if (crimeList.get(i).getId().equals(id)){
                 vp_container.setCurrentItem(i);

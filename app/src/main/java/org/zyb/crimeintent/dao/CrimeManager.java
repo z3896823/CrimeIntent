@@ -21,7 +21,6 @@ public class CrimeManager {
     private static CrimeManager crimeManager;
 
     private CrimeManager(){
-        crimeManager = new CrimeManager();
     }
 
     public static CrimeManager getCrimeManager(){
@@ -49,15 +48,6 @@ public class CrimeManager {
     }
 
     public void updateCrime(Crime crime){
-//        int position = 0;
-//        for (int i = 0;i<crimeList.size();i++){
-//            if (crime.getId() == crimeList.get(i).getId()){
-//                position = i;
-//                break;
-//            }
-//        }
-//        crimeList.remove(position);
-//        crimeList.add(position,crime);
         MyApplication.getDaoSession().getCrimeDao().update(crime);
     }
 
