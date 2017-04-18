@@ -1,4 +1,4 @@
-package org.zyb.criminalintent.fragment;
+package org.zyb.crimeintent.fragment;
 
 import android.content.Context;
 import android.content.Intent;
@@ -22,14 +22,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.zyb.criminalintent.CrimePagerActivity;
-import org.zyb.criminalintent.R;
-import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeManager;
-import org.zyb.criminalintent.util.Utility;
+import org.zyb.crimeintent.CrimePagerActivity;
+import org.zyb.crimeintent.MyApplication;
+import org.zyb.crimeintent.R;
+import org.zyb.crimeintent.model.Crime;
+import org.zyb.crimeintent.model.CrimeManager;
+import org.zyb.crimeintent.util.Utility;
 
 import java.util.Date;
-import java.util.UUID;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * <pre>
@@ -46,25 +48,28 @@ public class CrimeDetailFragment extends Fragment {
     private static final String TAG = "ybz";
     private Crime crime;
 
+    private LinearLayout ll_edit;
     private EditText et_title;
     private Button btn_crimeDate;
     private CheckBox cb_isSolved;
     private Button btn_suspect;
     private Button btn_report;
-    private Button btn_enter;
+
     private TextView tv_title;
 
-    public CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+    private Button btn_enter;
+
+    public CrimeManager crimeManager;
 
     /**
      * 该静态方法供Activity在创建本Fragment的时候调用，使得本Fragment在创建之初，
      * 且在attach给Activity之前就获得需要的数据（使用setArguments()方法）
-     * @param uuid the data it needs
+     * @param id the data it needs
      * @return a fragment with data
      */
-    public static CrimeDetailFragment newInstance(UUID uuid){
+    public static CrimeDetailFragment newInstance(Long id){
         Bundle bundle = new Bundle();
-        bundle.putSerializable("crimeId",uuid);
+        bundle.putLong("crimeId",id);
         CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
         crimeDetailFragment.setArguments(bundle);
         return crimeDetailFragment;
@@ -78,35 +83,23 @@ public class CrimeDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(null);
         setHasOptionsMenu(true);
-        UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
-        crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
+        crimeManager = CrimeManager.getCrimeManager();
+        crime = crimeManager.getCrimeById(getArguments().getLong("crimeId"));
     }
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
 
-        // 编辑模式
-        final LinearLayout ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
-        et_title = (EditText) v.findViewById(R.id.id_et_title);
-        et_title.setText(crime.getTitle());
-        btn_enter = (Button) v.findViewById(R.id.id_btn_enter);
-        btn_enter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String newTitle = et_title.getText().toString();
-                crimeManager.changeCrimeTitle(crime.getUuid(), newTitle);
-                ll_edit.setVisibility(View.GONE);
-                tv_title.setVisibility(View.VISIBLE);
-                tv_title.setText(et_title.getText());
-            }
-        });
-        // 默认将编辑控件隐藏，编辑时才显示
-        ll_edit.setVisibility(View.GONE);
-
-        //浏览模式
+        // init widget
         tv_title = (TextView) v.findViewById(R.id.id_tv_title);
+        ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
+        et_title = (EditText) v.findViewById(R.id.id_et_title);
+        btn_enter = (Button) v.findViewById(R.id.id_btn_enter);
+        btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
+        cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
+
+        // 浏览模式
         tv_title.setText(crime.getTitle());
         tv_title.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -115,14 +108,33 @@ public class CrimeDetailFragment extends Fragment {
                 tv_title.setVisibility(View.GONE);
                 ll_edit.setVisibility(View.VISIBLE);
                 et_title.setText(tv_title.getText());
-                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputMethodManager.showSoftInput(et_title, 0);
+                et_title.requestFocus();
+                showSoftKeyBoard(et_title);
             }
         });
 
-        //选择日期的btn，将会弹出DatePicker
+        // 编辑模式
+        et_title.setText(crime.getTitle());
+        btn_enter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String newTitle = et_title.getText().toString();
+                crime.setTitle(newTitle);
+                crimeManager.updateCrime(crime);
+                ll_edit.setVisibility(View.GONE);
+                tv_title.setVisibility(View.VISIBLE);
+                tv_title.setText(et_title.getText());
+                hideSoftKeyBoard();
+            }
+        });
+        // 默认将编辑控件隐藏，编辑时才显示
+        ll_edit.setVisibility(View.GONE);
+
+        if (crime.getTitle() == null){
+            tv_title.performClick();
+        }
+
         // DatePicker button
-        btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
         btn_crimeDate.setText(crime.getDate());
         btn_crimeDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,16 +147,16 @@ public class CrimeDetailFragment extends Fragment {
         });
 
         // checkBox
-        cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
-        cb_isSolved.setChecked(crime.getSolved());
+        cb_isSolved.setChecked(crime.getIsSolved());
         cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                crime.setSolved(isChecked);
+                crime.setIsSolved(isChecked);
                 //向数据库提交
-                crimeManager.changeCrimeSolved(crime.getUuid(),crime.getSolved());
+                crimeManager.updateCrime(crime);
             }
         });
+        cb_isSolved.setSaveEnabled(false);//强制不缓存该view的临时数据
 
         btn_report = (Button) v.findViewById(R.id.id_btn_report);
         btn_report.setOnClickListener(new View.OnClickListener() {
@@ -165,25 +177,41 @@ public class CrimeDetailFragment extends Fragment {
             }
         });
 
+        Log.d(TAG, crime.getId()+ "  view Created");
+        Log.d(TAG, crime.getId()+ "   visibleToUser: "+getUserVisibleHint());
         return v;
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onResume() {
+        Log.d(TAG, crime.getId()+"  onResumed");
+        super.onResume();
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(null);
+    public void onPause(){
+        super.onPause();
+        hideSoftKeyBoard();
+        Log.d(TAG, crime.getId()+ "  onPaused");
     }
 
-
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        Log.d(TAG, "setUserVisibleHint: ");
+//        if (isVisibleToUser){
+//            if (crime.getTitle() == null){
+//                showSoftKeyBoard(et_title);
+//            } else {
+//                hideSoftKeyBoard();
+//            }
+//        }
+    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "detailFragment of "+crime.getUuid()+ " is destroyed");
+        Log.d(TAG, "detailFragment of "+crime.getId()+ " is destroyed");
     }
 
     /**
@@ -199,7 +227,8 @@ public class CrimeDetailFragment extends Fragment {
             switch (resultCode){
                 case DatePickerFragment.RESULT_OK:
                     Date date = (Date) data.getSerializableExtra("crimeDate");
-                    crimeManager.changeCrimeDate(crime.getUuid(),Utility.dateToString(date));
+                    crime.setDate(Utility.dateToString(date));
+                    crimeManager.updateCrime(crime);
                     //由于btn不属于编辑型控件，需要手动更新其内容
                     btn_crimeDate.setText(crime.getDate());
                     break;
@@ -226,11 +255,26 @@ public class CrimeDetailFragment extends Fragment {
                     break;
                 }
                 CrimePagerActivity crimePagerActivity = ((CrimePagerActivity)getActivity());
-                crimePagerActivity.onItemDeleted(crime.getUuid());
+                crimePagerActivity.onItemDeleted(crime);
                 break;
             default:
                 break;
         }
         return true;
+    }
+
+    private void showSoftKeyBoard(final EditText editText){
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            public void run() {
+                InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.showSoftInput(editText, 0);
+            }
+        }, 300);
+    }
+
+    private void hideSoftKeyBoard(){
+        InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.hideSoftInputFromWindow(et_title.getWindowToken(),0);
     }
 }

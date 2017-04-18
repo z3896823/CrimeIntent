@@ -1,7 +1,6 @@
-package org.zyb.criminalintent.fragment;
+package org.zyb.crimeintent.fragment;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,22 +13,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import org.zyb.criminalintent.CrimePagerActivity;
-import org.zyb.criminalintent.R;
-import org.zyb.criminalintent.database.CursorParser;
-import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeManager;
+import org.zyb.crimeintent.CrimePagerActivity;
+import org.zyb.crimeintent.R;
+import org.zyb.crimeintent.model.Crime;
+import org.zyb.crimeintent.model.CrimeManager;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * <pre>
@@ -49,10 +42,13 @@ public class CrimeListFragment extends Fragment {
 
     private CrimeManager crimeManager;
 
+    private List<Crime> crimeList;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        crimeManager = CrimeManager.getCrimeManager();
     }
 
     @Nullable
@@ -61,58 +57,14 @@ public class CrimeListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_crimelist,container,false);
         rv_crimeList = (RecyclerView) view.findViewById(R.id.id_rv_crimeList);
 
+        // setLayoutManager
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         rv_crimeList.setLayoutManager(layoutManager);
 
-        crimeManager = CrimeManager.getCrimeManager(getActivity());
-
-        List<Crime> crimeList = crimeManager.getCrimeList();
+        // setAdapter
+        crimeList = crimeManager.getCrimeList();
         CrimeAdapter adapter = new CrimeAdapter(crimeList);
         rv_crimeList.setAdapter(adapter);
-
-        //test
-        /*
-        final EditText et_title = (EditText) view.findViewById(R.id.id_et_title);
-        Button btn_del = (Button) view.findViewById(R.id.id_btn_delete);
-        Button btn_queryMemory = (Button) view.findViewById(R.id.id_btn_queryMemory);
-        Button btn_queryDatabase = (Button) view.findViewById(R.id.id_btn_queryDatabase);
-        final TextView tv_result = (TextView) view.findViewById(R.id.id_tv_result);
-
-        btn_del.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Crime crime = crimeManager.getCrime(et_title.getText().toString());
-                crimeManager.deleteCrime(crime.getUuid());
-                rv_crimeList.getAdapter().notifyDataSetChanged();
-            }
-        });
-
-        btn_queryMemory.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<Crime> crimeList = crimeManager.getCrimeList();
-                StringBuilder sb = new StringBuilder();
-                sb.append("Memory:");
-                for (int i = 0;i<crimeList.size();i++){
-                    sb.append(crimeList.get(i).getTitle());
-                }
-                tv_result.setText(sb);
-            }
-        });
-
-        btn_queryDatabase.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<Crime> crimeList1 = crimeManager.getCrimeListFromDB();
-                StringBuilder sb = new StringBuilder();
-                sb.append("Database:");
-                for (int i = 0;i<crimeList1.size();i++){
-                    sb.append(crimeList1.get(i).getTitle());
-                }
-                tv_result.setText(sb);
-            }
-        });
-        */
 
         return view;
     }
@@ -135,9 +87,11 @@ public class CrimeListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.id_menu_add:
-                // 告诉CrimeManager我要添加一个对象，并返回给我新建对象的UUID
-                UUID uuid = crimeManager.addCrime();//返回新生成的Crime对象的UUID
-                Intent intent = CrimePagerActivity.newIntent(getActivity(),uuid);
+                Crime crime = new Crime();
+                Log.d(TAG, "before add into db new crime id is :" + crime.getId());
+                crimeManager.addCrime(crime);//greendao会不会自动创建id？
+                Log.d(TAG, "after add into db new crime id is :" + crime.getId());
+                Intent intent = CrimePagerActivity.newIntent(getActivity(),crime.getId());
                 startActivity(intent);
                 break;
             default:
@@ -163,7 +117,7 @@ public class CrimeListFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     int position = holder.getAdapterPosition();
-                    Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getUuid());
+                    Intent intent = CrimePagerActivity.newIntent(getActivity(),crimeList.get(position).getId());
                     startActivity(intent);
                 }
             });
@@ -174,9 +128,9 @@ public class CrimeListFragment extends Fragment {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     int position = holder.getAdapterPosition();
                     Crime crime = crimeList.get(position);
-                    crime.setSolved(isChecked);
+                    crime.setIsSolved(isChecked);
                     //向数据库提交数据
-                    crimeManager.changeCrimeSolved(crime.getUuid(),crime.getSolved());
+                    crimeManager.updateCrime(crime);
                 }
             });
 
@@ -188,7 +142,7 @@ public class CrimeListFragment extends Fragment {
             Crime crime = crimeList.get(position);
             holder.tv_title.setText(crime.getTitle());
             holder.tv_date.setText(crime.getDate());
-            holder.cb_isSolved.setChecked(crime.getSolved());
+            holder.cb_isSolved.setChecked(crime.getIsSolved());
         }
 
         @Override

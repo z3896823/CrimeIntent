@@ -1,9 +1,9 @@
-package org.zyb.criminalintent;
+package org.zyb.crimeintent;
 
 import android.support.v4.app.Fragment;
 
-import org.zyb.criminalintent.fragment.CrimeListFragment;
-import org.zyb.criminalintent.util.SingleFragmentActivity;
+import org.zyb.crimeintent.fragment.CrimeListFragment;
+import org.zyb.crimeintent.util.SingleFragmentActivity;
 
 /**
  * <pre>

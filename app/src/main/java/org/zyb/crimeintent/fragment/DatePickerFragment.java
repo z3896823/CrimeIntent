@@ -1,4 +1,4 @@
-package org.zyb.criminalintent.fragment;
+package org.zyb.crimeintent.fragment;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -11,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.DatePicker;
 
-import org.zyb.criminalintent.R;
+import org.zyb.crimeintent.R;
 
 import java.util.Calendar;
 import java.util.Date;

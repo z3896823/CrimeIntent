@@ -1,4 +1,4 @@
-package org.zyb.criminalintent.util;
+package org.zyb.crimeintent.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

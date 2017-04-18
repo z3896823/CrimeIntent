@@ -1,4 +1,4 @@
-package org.zyb.criminalintent.util;
+package org.zyb.crimeintent.util;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -6,7 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
-import org.zyb.criminalintent.R;
+import org.zyb.crimeintent.R;
 
 /**
  * <pre>
