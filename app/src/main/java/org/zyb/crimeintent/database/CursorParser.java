@@ -1,9 +1,8 @@
-package org.zyb.criminalintent.database;
+package org.zyb.crimeintent.database;
 
 import android.database.Cursor;
 
-import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.util.Utility;
+import org.zyb.crimeintent.model.Crime;
 
 import java.util.ArrayList;
 import java.util.List;

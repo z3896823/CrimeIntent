@@ -1,4 +1,4 @@
-package org.zyb.criminalintent.database;
+package org.zyb.crimeintent.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

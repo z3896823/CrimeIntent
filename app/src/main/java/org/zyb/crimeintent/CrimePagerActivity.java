@@ -1,4 +1,4 @@
-package org.zyb.criminalintent;
+package org.zyb.crimeintent;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,14 +10,10 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
-import org.zyb.criminalintent.fragment.CrimeDetailFragment;
-import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeManager;
+import org.zyb.crimeintent.dao.Crime;
+import org.zyb.crimeintent.dao.CrimeManager;
+import org.zyb.crimeintent.fragment.CrimeDetailFragment;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,9 +37,9 @@ public class CrimePagerActivity extends AppCompatActivity {
 
     private List<Crime> crimeList;
 
-    public static Intent newIntent(Context context, UUID uuid){
+    public static Intent newIntent(Context context, Long id){
         Intent intent = new Intent(context,CrimePagerActivity.class);
-        intent.putExtra("crimeId",uuid);
+        intent.putExtra("crimeId",id);
         return intent;
     }
 
@@ -51,19 +47,19 @@ public class CrimePagerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crimepager);
-
-        crimeManager = CrimeManager.getCrimeManager(this);
-        crimeList = crimeManager.getCrimeList();
         vp_container = (ViewPager) findViewById(R.id.id_vp_container);
 
-        // create adapter
+        crimeManager = CrimeManager.getCrimeManager();
+        crimeList = crimeManager.getCrimeList();
+
+        // setAdapter
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentStatePagerAdapter adapter = new FragmentStatePagerAdapter(fragmentManager) {
 
             @Override
             public Fragment getItem(int position) {
                 Crime crime = crimeList.get(position);
-                return CrimeDetailFragment.newInstance(crime.getUuid());
+                return CrimeDetailFragment.newInstance(crime.getId());
             }
 
             @Override
@@ -78,11 +74,10 @@ public class CrimePagerActivity extends AppCompatActivity {
         };
         vp_container.setAdapter(adapter);
 
-        // tell viewPager where to start
-        UUID crimeId = (UUID) getIntent().getSerializableExtra("crimeId");
-        List<Crime> crimeList = crimeManager.getCrimeList();
+        // setCurrentItem
+        Long id = getIntent().getLongExtra("id",0);
         for (int i = 0; i<crimeList.size();i++){
-            if (crimeList.get(i).getUuid().equals(crimeId)){
+            if (crimeList.get(i).getId().equals(id)){
                 vp_container.setCurrentItem(i);
                 break;
             }
@@ -91,10 +86,10 @@ public class CrimePagerActivity extends AppCompatActivity {
 
     /**
      * 当一页Pager被删除后，通知adapter
-     * @param uuid 要删除的item的UUID
+     * @param crime 要删除的item的UUID
      */
-    public void onItemDeleted(UUID uuid){
-        crimeManager.deleteCrime(uuid);
+    public void onItemDeleted(Crime crime){
+        crimeManager.deleteCrime(crime);
         vp_container.getAdapter().notifyDataSetChanged();
     }
 }

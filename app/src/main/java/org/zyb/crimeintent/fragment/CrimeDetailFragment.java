@@ -1,12 +1,10 @@
-package org.zyb.criminalintent.fragment;
+package org.zyb.crimeintent.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,11 +18,11 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.zyb.criminalintent.CrimePagerActivity;
-import org.zyb.criminalintent.R;
-import org.zyb.criminalintent.model.Crime;
-import org.zyb.criminalintent.model.CrimeManager;
-import org.zyb.criminalintent.util.Utility;
+import org.zyb.crimeintent.CrimePagerActivity;
+import org.zyb.crimeintent.R;
+import org.zyb.crimeintent.dao.Crime;
+import org.zyb.crimeintent.dao.CrimeManager;
+import org.zyb.crimeintent.util.Utility;
 
 import java.util.Date;
 import java.util.UUID;
@@ -50,18 +48,17 @@ public class CrimeDetailFragment extends Fragment {
     private Button btn_suspect;
     private Button btn_report;
 
-    public CrimeManager crimeManager = CrimeManager.getCrimeManager(getActivity());
+    public CrimeManager crimeManager;
 
     /**
      * 该静态方法供Activity在创建本Fragment的时候调用，使得本Fragment在创建之初，
      * 且在attach给Activity之前就获得需要的数据（使用setArguments()方法）
-     * @param uuid the data it needs
+     * @param id the data it needs
      * @return a fragment with data
      */
-    public static CrimeDetailFragment newInstance(UUID uuid){
+    public static CrimeDetailFragment newInstance(Long id){
         Bundle bundle = new Bundle();
-        bundle.putSerializable("crimeId",uuid);
-        Log.d(TAG, "detailFragment of "+ uuid+ " is creating");
+        bundle.putLong("crimeId",id);
         CrimeDetailFragment crimeDetailFragment = new CrimeDetailFragment();
         crimeDetailFragment.setArguments(bundle);
         return crimeDetailFragment;
@@ -75,14 +72,13 @@ public class CrimeDetailFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(null);
         setHasOptionsMenu(true);
-        UUID crimeId = (UUID)getArguments().getSerializable("crimeId");
-        crime = CrimeManager.getCrimeManager(getActivity()).getCrime(crimeId);//成功获取到Crime对象
-        Log.d(TAG, "detailFragment of "+ crime.getTitle()+" is created");
+        crimeManager = CrimeManager.getCrimeManager();
+        Long id = getArguments().getLong("crimeId");
+        crime = crimeManager.getCrimeById(id);//成功获取到Crime对象
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
         View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
 
         et_title = (EditText) v.findViewById(R.id.id_et_title);
@@ -126,13 +122,13 @@ public class CrimeDetailFragment extends Fragment {
 
         // checkBox
         cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
-        cb_isSolved.setChecked(crime.getSolved());
+        cb_isSolved.setChecked(crime.getIsSolved());
         cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                crime.setSolved(isChecked);
+                crime.setIsSolved(isChecked);
                 //向数据库提交
-                crimeManager.changeCrimeSolved(crime.getUuid(),crime.getSolved());
+                crimeManager.updateCrime(crime);
             }
         });
 
@@ -144,7 +140,8 @@ public class CrimeDetailFragment extends Fragment {
         //如果编辑框可见，则此时在添加数据，那么获取编辑框内容对数据进行更新
         if (et_title.getVisibility()!=View.GONE) {
             String newTitle = et_title.getText().toString();
-            crimeManager.changeCrimeTitle(crime.getUuid(),newTitle);
+            crime.setTitle(newTitle);
+            crimeManager.updateCrime(crime);
         }
         super.onPause();
     }
@@ -159,7 +156,7 @@ public class CrimeDetailFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "detailFragment of "+crime.getUuid()+ " is destroyed");
+        Log.d(TAG, "detailFragment of "+crime.getId()+ " is destroyed");
     }
 
     /**
@@ -175,7 +172,8 @@ public class CrimeDetailFragment extends Fragment {
             switch (resultCode){
                 case DatePickerFragment.RESULT_OK:
                     Date date = (Date) data.getSerializableExtra("crimeDate");
-                    crimeManager.changeCrimeDate(crime.getUuid(),Utility.dateToString(date));
+                    crime.setDate(Utility.dateToString(date));
+                    crimeManager.updateCrime(crime);
                     //由于btn不属于编辑型控件，需要手动更新其内容
                     btn_crimeDate.setText(crime.getDate());
                     break;
@@ -198,7 +196,7 @@ public class CrimeDetailFragment extends Fragment {
         switch (item.getItemId()){
             case R.id.id_menu_delete:
                 CrimePagerActivity crimePagerActivity = ((CrimePagerActivity)getActivity());
-                crimePagerActivity.onItemDeleted(crime.getUuid());
+                crimePagerActivity.onItemDeleted(crime);
                 break;
             default:
                 break;

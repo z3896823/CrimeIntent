@@ -1,4 +1,4 @@
-package org.zyb.criminalintent;
+package org.zyb.crimeintent;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
