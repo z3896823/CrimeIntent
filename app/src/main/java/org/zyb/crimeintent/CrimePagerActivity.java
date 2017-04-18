@@ -11,12 +11,11 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
-import org.zyb.crimeintent.dao.Crime;
-import org.zyb.crimeintent.dao.CrimeManager;
+import org.zyb.crimeintent.model.Crime;
+import org.zyb.crimeintent.model.CrimeManager;
 import org.zyb.crimeintent.fragment.CrimeDetailFragment;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * <pre>

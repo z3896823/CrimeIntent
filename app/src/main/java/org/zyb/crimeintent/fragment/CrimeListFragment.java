@@ -13,19 +13,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import org.zyb.crimeintent.CrimePagerActivity;
 import org.zyb.crimeintent.R;
-import org.zyb.crimeintent.dao.Crime;
-import org.zyb.crimeintent.dao.CrimeManager;
+import org.zyb.crimeintent.model.Crime;
+import org.zyb.crimeintent.model.CrimeManager;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * <pre>

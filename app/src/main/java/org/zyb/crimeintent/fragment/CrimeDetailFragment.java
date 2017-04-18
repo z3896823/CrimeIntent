@@ -23,12 +23,13 @@ import android.widget.TextView;
 
 import org.zyb.crimeintent.CrimePagerActivity;
 import org.zyb.crimeintent.R;
-import org.zyb.crimeintent.dao.Crime;
-import org.zyb.crimeintent.dao.CrimeManager;
+import org.zyb.crimeintent.model.Crime;
+import org.zyb.crimeintent.model.CrimeManager;
 import org.zyb.crimeintent.util.Utility;
 
 import java.util.Date;
-import java.util.UUID;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * <pre>
@@ -45,6 +46,7 @@ public class CrimeDetailFragment extends Fragment {
     private static final String TAG = "ybz";
     private Crime crime;
 
+    private LinearLayout ll_edit;
     private EditText et_title;
     private Button btn_crimeDate;
     private CheckBox cb_isSolved;
@@ -54,7 +56,6 @@ public class CrimeDetailFragment extends Fragment {
     private TextView tv_title;
 
     private Button btn_enter;
-
 
     public CrimeManager crimeManager;
 
@@ -81,23 +82,24 @@ public class CrimeDetailFragment extends Fragment {
         super.onCreate(null);
         setHasOptionsMenu(true);
         crimeManager = CrimeManager.getCrimeManager();
-        Long id = getArguments().getLong("crimeId");
-        crime = crimeManager.getCrimeById(id);//成功获取到Crime对象
+        Long crimeId = getArguments().getLong("crimeId");
+        crime = crimeManager.getCrimeById(crimeId);
         Log.d(TAG, "detailFragment of "+crime.getId()+ " is created");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
-        v.setSaveEnabled(false);
 
         // init widget
         tv_title = (TextView) v.findViewById(R.id.id_tv_title);
-        final LinearLayout ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
+        ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
         et_title = (EditText) v.findViewById(R.id.id_et_title);
         btn_enter = (Button) v.findViewById(R.id.id_btn_enter);
+        btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
+        cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
 
-        //浏览模式
+        // 浏览模式
         tv_title.setText(crime.getTitle());
         tv_title.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,8 +108,8 @@ public class CrimeDetailFragment extends Fragment {
                 tv_title.setVisibility(View.GONE);
                 ll_edit.setVisibility(View.VISIBLE);
                 et_title.setText(tv_title.getText());
-                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputMethodManager.showSoftInput(et_title, 0);
+                et_title.requestFocus();
+                showSoftKeyBoard(et_title);
             }
         });
 
@@ -122,15 +124,17 @@ public class CrimeDetailFragment extends Fragment {
                 ll_edit.setVisibility(View.GONE);
                 tv_title.setVisibility(View.VISIBLE);
                 tv_title.setText(et_title.getText());
+                hideSoftKeyBoard();
             }
         });
         // 默认将编辑控件隐藏，编辑时才显示
         ll_edit.setVisibility(View.GONE);
 
+        if (crime.getTitle() == null){
+            tv_title.performClick();
+        }
 
-        //选择日期的btn，将会弹出DatePicker
         // DatePicker button
-        btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
         btn_crimeDate.setText(crime.getDate());
         btn_crimeDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,7 +147,6 @@ public class CrimeDetailFragment extends Fragment {
         });
 
         // checkBox
-        cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
         cb_isSolved.setChecked(crime.getIsSolved());
         cb_isSolved.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -153,27 +156,38 @@ public class CrimeDetailFragment extends Fragment {
                 crimeManager.updateCrime(crime);
             }
         });
+        cb_isSolved.setSaveEnabled(false);//强制不缓存该view的临时数据
 
+        Log.d(TAG, crime.getId()+ "  view Created");
+        Log.d(TAG, crime.getId()+ "   visibleToUser: "+getUserVisibleHint());
         return v;
     }
 
     @Override
-    public void onPause(){
-        //如果编辑框可见，则此时在添加数据，那么获取编辑框内容对数据进行更新
-        if (et_title.getVisibility()!=View.GONE) {
-            String newTitle = et_title.getText().toString();
-            crime.setTitle(newTitle);
-            crimeManager.updateCrime(crime);
-        }
-        super.onPause();
+    public void onResume() {
+        Log.d(TAG, crime.getId()+"  onResumed");
+        super.onResume();
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(null);
+    public void onPause(){
+        super.onPause();
+        hideSoftKeyBoard();
+        Log.d(TAG, crime.getId()+ "  onPaused");
     }
 
-
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        Log.d(TAG, "setUserVisibleHint: ");
+//        if (isVisibleToUser){
+//            if (crime.getTitle() == null){
+//                showSoftKeyBoard(et_title);
+//            } else {
+//                hideSoftKeyBoard();
+//            }
+//        }
+    }
 
     @Override
     public void onDestroy() {
@@ -224,5 +238,20 @@ public class CrimeDetailFragment extends Fragment {
                 break;
         }
         return true;
+    }
+
+    private void showSoftKeyBoard(final EditText editText){
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            public void run() {
+                InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.showSoftInput(editText, 0);
+            }
+        }, 300);
+    }
+
+    private void hideSoftKeyBoard(){
+        InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.hideSoftInputFromWindow(et_title.getWindowToken(),0);
     }
 }
