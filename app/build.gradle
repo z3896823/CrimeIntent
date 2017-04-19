@@ -14,7 +14,7 @@ android {
     }
 
     greendao {
-        schemaVersion 1
+        schemaVersion 2
         daoPackage 'org.zyb.crimeintent.dao'
         targetGenDir 'src/main/java'
     }

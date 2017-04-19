@@ -1,11 +1,19 @@
 package org.zyb.crimeintent.fragment;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,7 +31,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.zyb.crimeintent.CrimePagerActivity;
-import org.zyb.crimeintent.MyApplication;
 import org.zyb.crimeintent.R;
 import org.zyb.crimeintent.model.Crime;
 import org.zyb.crimeintent.model.CrimeManager;
@@ -47,6 +54,11 @@ public class CrimeDetailFragment extends Fragment {
 
     private static final String TAG = "ybz";
     private Crime crime;
+
+    private final int REQUEST_CONTACT = 1;
+    private final int REQUEST_DATE = 2;
+
+    private final int PERMISSION_CONTACTS = 1;
 
     private LinearLayout ll_edit;
     private EditText et_title;
@@ -91,7 +103,7 @@ public class CrimeDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crimedetail,container,false);
 
-        // init widget
+        // init widgets
         tv_title = (TextView) v.findViewById(R.id.id_tv_title);
         ll_edit = (LinearLayout) v.findViewById(R.id.id_ll_edit);
         et_title = (EditText) v.findViewById(R.id.id_et_title);
@@ -130,18 +142,19 @@ public class CrimeDetailFragment extends Fragment {
         // 默认将编辑控件隐藏，编辑时才显示
         ll_edit.setVisibility(View.GONE);
 
+        // 但是如果标题为空，则调出编辑模式
         if (crime.getTitle() == null){
             tv_title.performClick();
         }
 
-        // DatePicker button
+        // DatePicker
         btn_crimeDate.setText(crime.getDate());
         btn_crimeDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentManager manager = getFragmentManager();
                 DatePickerFragment dialog = DatePickerFragment.newInstance(Utility.stringToDate(crime.getDate()));
-                dialog.setTargetFragment(CrimeDetailFragment.this, 1);
+                dialog.setTargetFragment(CrimeDetailFragment.this, REQUEST_DATE);
                 dialog.show(manager,"datePickerDialog");
             }
         });
@@ -158,24 +171,36 @@ public class CrimeDetailFragment extends Fragment {
         });
         cb_isSolved.setSaveEnabled(false);//强制不缓存该view的临时数据
 
+        // suspect
+        btn_suspect = (Button) v.findViewById(R.id.id_btn_suspect);
+        if (crime.getSuspect() != null){
+            btn_suspect.setText(crime.getSuspect());
+        }
+        btn_suspect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // check permission
+                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_CONTACTS)!= PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(getActivity(),new String[]{Manifest.permission.READ_CONTACTS},PERMISSION_CONTACTS);
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                    startActivityForResult(intent, REQUEST_CONTACT);
+                }
+            }
+        });
+
+        // report
         btn_report = (Button) v.findViewById(R.id.id_btn_report);
         btn_report.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent();
-                intent.setAction(Intent.ACTION_VIEW);
+                intent.setAction(Intent.ACTION_SEND).setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, generateCrimeReport(crime));
                 startActivity(intent);
-
             }
         });
 
-        btn_suspect = (Button) v.findViewById(R.id.id_btn_suspect);
-        btn_suspect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
 
         Log.d(TAG, crime.getId()+ "  view Created");
         Log.d(TAG, crime.getId()+ "   visibleToUser: "+getUserVisibleHint());
@@ -217,24 +242,36 @@ public class CrimeDetailFragment extends Fragment {
     /**
      * 接收来自DatePicker的数据
      * 先验证结果来自哪一方（requestCode），再验证是什么结果（resultCode）
-     * @param requestCode identity who send this result
-     * @param resultCode identify the specific result
-     * @param data where the data is stored
      */
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 1){
-            switch (resultCode){
-                case DatePickerFragment.RESULT_OK:
-                    Date date = (Date) data.getSerializableExtra("crimeDate");
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        switch (requestCode) {
+            case REQUEST_DATE:
+                if (resultCode == DatePickerFragment.RESULT_OK) {
+                    Date date = (Date) intent.getSerializableExtra("crimeDate");
+
                     crime.setDate(Utility.dateToString(date));
                     crimeManager.updateCrime(crime);
-                    //由于btn不属于编辑型控件，需要手动更新其内容
                     btn_crimeDate.setText(crime.getDate());
-                    break;
-                default:
-                    break;
-            }
+                }
+                break;
+            case REQUEST_CONTACT:
+                if (intent != null){
+                    Uri uri = intent.getData();
+                    String[] queryField = {ContactsContract.Contacts.DISPLAY_NAME};
+                    Cursor cursor = getActivity().getContentResolver().query(uri,queryField,null,null,null);
+                    if (cursor == null){
+                        return;
+                    }
+                    cursor.moveToFirst();
+                    String suspectName = cursor.getString(0);
+
+                    crime.setSuspect(suspectName);
+                    crimeManager.updateCrime(crime);
+                    btn_suspect.setText(suspectName);
+                    cursor.close();
+                }
+
         }
     }
 
@@ -263,6 +300,9 @@ public class CrimeDetailFragment extends Fragment {
         return true;
     }
 
+    /**
+     * 显示软键盘
+     */
     private void showSoftKeyBoard(final EditText editText){
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
@@ -273,8 +313,34 @@ public class CrimeDetailFragment extends Fragment {
         }, 300);
     }
 
+    /**
+     * 隐藏软键盘
+     */
     private void hideSoftKeyBoard(){
         InputMethodManager inputManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         inputManager.hideSoftInputFromWindow(et_title.getWindowToken(),0);
+    }
+
+    /**
+     * 根据传入的Crime对象生成一份report
+     */
+    private String generateCrimeReport(Crime crime){
+        return "title:"+ crime.getTitle()+"\n"+"date:"+ crime.getDate()+"\n"+"isSolved:"+crime.getIsSolved();
+    }
+
+    /**
+     * 运行时权限处理
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case PERMISSION_CONTACTS:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                    startActivityForResult(intent, REQUEST_CONTACT);
+                } else {
+                    Toast.makeText(getActivity(), "permission denied", Toast.LENGTH_SHORT).show();
+                }
+        }
     }
 }
