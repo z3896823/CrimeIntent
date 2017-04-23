@@ -211,7 +211,6 @@ public class CrimeDetailFragment extends Fragment {
                     Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
                     startActivityForResult(intent, REQUEST_CONTACT);
                 }
-
             }
         });
 
@@ -231,19 +230,21 @@ public class CrimeDetailFragment extends Fragment {
         if (crime.getImageLoc() != null){
             Glide.with(getActivity()).load(Uri.parse(crime.getImageLoc())).diskCacheStrategy(DiskCacheStrategy.NONE).into(iv_crimeImage);
         }
-        // 短按使用Glide加载Uri指向的图片
+
+        // 短按使用Bitmap加载Uri指向的图片
         iv_crimeImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = BigImageActivity.newIntent(getActivity(),crime.getId());
+                Intent intent = BigImageActivity2.newIntent(getActivity(),crime.getId());
                 startActivity(intent);
+
             }
         });
-        // 长按使用Bitmap加载Uri指向的图片
+        // 长按使用Glide加载Uri指向的图片
         iv_crimeImage.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Intent intent = BigImageActivity2.newIntent(getActivity(),crime.getId());
+                Intent intent = BigImageActivity.newIntent(getActivity(),crime.getId());
                 startActivity(intent);
                 return true;
             }
@@ -285,13 +286,6 @@ public class CrimeDetailFragment extends Fragment {
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
         Log.d(TAG, "setUserVisibleHint: ");
-//        if (isVisibleToUser){
-//            if (crime.getTitle() == null){
-//                showSoftKeyBoard(et_title);
-//            } else {
-//                hideSoftKeyBoard();
-//            }
-//        }
     }
 
     @Override
@@ -453,5 +447,4 @@ public class CrimeDetailFragment extends Fragment {
             crimeManager.updateCrime(crime);
         }
     }
-
 }

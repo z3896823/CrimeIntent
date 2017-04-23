@@ -38,25 +38,46 @@ public class CrimeManager {
         return crimeList;
     }
 
+    /**
+     * 添加数据
+     *
+     * 内存中和数据库中同步添加
+     */
     public void addCrime(Crime crime){
         crime.setDate(Utility.dateToString(new Date()));
         crimeList.add(crime);
         MyApplication.getDaoSession().getCrimeDao().insert(crime);
     }
 
+    /**
+     * 删除数据
+     *
+     * 内存中和数据库中同步删除
+     */
     public void deleteCrime(Crime crime){
         crimeList.remove(crime);
         MyApplication.getDaoSession().getCrimeDao().delete(crime);
     }
 
+    /**
+     * 更新数据
+     *
+     * 内存中的数据本身就已改变，不需要重复更新
+     */
     public void updateCrime(Crime crime){
         MyApplication.getDaoSession().getCrimeDao().update(crime);
     }
 
+    /**
+     * 根据id返回Crime对象
+     */
     public Crime getCrimeById(Long id){
         return MyApplication.getDaoSession().getCrimeDao().load(id);
     }
 
+    /**
+     * 从数据库中获取完整数据
+     */
     private List<Crime> getCrimeListFromDB(){
         return MyApplication.getDaoSession().getCrimeDao().loadAll();
     }
