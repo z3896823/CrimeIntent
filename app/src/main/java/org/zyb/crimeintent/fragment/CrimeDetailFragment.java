@@ -5,15 +5,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,16 +32,27 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+import org.zyb.crimeintent.BigImageActivity;
+import org.zyb.crimeintent.BigImageActivity2;
 import org.zyb.crimeintent.CrimePagerActivity;
 import org.zyb.crimeintent.R;
 import org.zyb.crimeintent.model.Crime;
 import org.zyb.crimeintent.model.CrimeManager;
 import org.zyb.crimeintent.util.Utility;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -57,6 +74,7 @@ public class CrimeDetailFragment extends Fragment {
 
     private final int REQUEST_CONTACT = 1;
     private final int REQUEST_DATE = 2;
+    private final int REQUEST_PHOTO = 3;
 
     private final int PERMISSION_CONTACTS = 1;
 
@@ -67,9 +85,14 @@ public class CrimeDetailFragment extends Fragment {
     private Button btn_suspect;
     private Button btn_report;
 
+    private ImageButton ib_camera;
+    private ImageView iv_crimeImage;
+
     private TextView tv_title;
 
     private Button btn_enter;
+
+    private Uri imageUri;
 
     public CrimeManager crimeManager;
 
@@ -110,6 +133,8 @@ public class CrimeDetailFragment extends Fragment {
         btn_enter = (Button) v.findViewById(R.id.id_btn_enter);
         btn_crimeDate = (Button) v.findViewById(R.id.id_btn_crimeDate);
         cb_isSolved = (CheckBox) v.findViewById(R.id.id_cb_isSolved);
+        iv_crimeImage = (ImageView) v.findViewById(R.id.id_iv_crimeImage);
+        ib_camera = (ImageButton) v.findViewById(R.id.id_ib_camera);
 
         // 浏览模式
         tv_title.setText(crime.getTitle());
@@ -186,6 +211,7 @@ public class CrimeDetailFragment extends Fragment {
                     Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
                     startActivityForResult(intent, REQUEST_CONTACT);
                 }
+
             }
         });
 
@@ -201,6 +227,38 @@ public class CrimeDetailFragment extends Fragment {
             }
         });
 
+        // image
+        if (crime.getImageLoc() != null){
+            Glide.with(getActivity()).load(Uri.parse(crime.getImageLoc())).diskCacheStrategy(DiskCacheStrategy.NONE).into(iv_crimeImage);
+        }
+        // 短按使用Glide加载Uri指向的图片
+        iv_crimeImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = BigImageActivity.newIntent(getActivity(),crime.getId());
+                startActivity(intent);
+            }
+        });
+        // 长按使用Bitmap加载Uri指向的图片
+        iv_crimeImage.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Intent intent = BigImageActivity2.newIntent(getActivity(),crime.getId());
+                startActivity(intent);
+                return true;
+            }
+        });
+
+        // camera
+        ib_camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                initImageUri();
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT,imageUri);//指定拍摄的照片存放位置
+                startActivityForResult(intent,REQUEST_PHOTO);
+            }
+        });
 
         Log.d(TAG, crime.getId()+ "  view Created");
         Log.d(TAG, crime.getId()+ "   visibleToUser: "+getUserVisibleHint());
@@ -217,6 +275,9 @@ public class CrimeDetailFragment extends Fragment {
     public void onPause(){
         super.onPause();
         hideSoftKeyBoard();
+        if (crime.getTitle() == null || crime.getTitle().isEmpty()){
+            crimeManager.deleteCrime(crime);
+        }
         Log.d(TAG, crime.getId()+ "  onPaused");
     }
 
@@ -240,8 +301,11 @@ public class CrimeDetailFragment extends Fragment {
     }
 
     /**
-     * 接收来自DatePicker的数据
-     * 先验证结果来自哪一方（requestCode），再验证是什么结果（resultCode）
+     * 接收各种返回结果
+     *
+     * @param requestCode 结果来自哪里
+     * @param resultCode 结果内容如何
+     * @param intent 结果数据包
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -271,6 +335,26 @@ public class CrimeDetailFragment extends Fragment {
                     btn_suspect.setText(suspectName);
                     cursor.close();
                 }
+                break;
+            case REQUEST_PHOTO:
+                // 加载图片到指定View（此时Uri不变，但指向的文件应该已经被相机改写）
+                /**
+                 * 此处不得已使用了Bitmap加载的方法
+                 * 因为相同uri，相同目标view，Glide不加载第二次，除非以某种方式告诉glide，Uri指向的文件已经变了
+                 */
+//                Glide.with(getActivity()).load(imageUri).diskCacheStrategy(DiskCacheStrategy.NONE).into(iv_crimeImage);
+
+                Bitmap bitmap = null;
+                try {
+                    bitmap = BitmapFactory.decodeStream(getActivity().getContentResolver().openInputStream(imageUri));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+                bitmap = Utility.setScaleBitmap(bitmap,2);
+                iv_crimeImage.setImageBitmap(bitmap);
+
+                Log.d(TAG, "image load success");
 
         }
     }
@@ -343,4 +427,31 @@ public class CrimeDetailFragment extends Fragment {
                 }
         }
     }
+
+    /**
+     * 对imageUri进行初始化
+     * 检查该crime是否有imageUri，如果有，据此生成一个Uri返回出去
+     * 如果没有，创建一个文件，并根据这个文件生成一个imageUri，返回出去
+     */
+    public void initImageUri(){
+        if (crime.getImageLoc() != null){
+            imageUri = Uri.parse(crime.getImageLoc());
+        } else {
+            File crimeImageFile = new File(getActivity().getExternalCacheDir(),crime.getId()+".jpg");
+            Log.d(TAG, crimeImageFile.toString());
+
+            // 根据SDK版本用不同的方式将File包装进imageUri
+            if (Build.VERSION.SDK_INT>=24){
+                imageUri = FileProvider.getUriForFile(getActivity(),"asda",crimeImageFile);
+                Log.d(TAG, "imageUri: new  "+ imageUri.toString());
+            } else {
+                imageUri = Uri.fromFile(crimeImageFile);
+                Log.d(TAG, "imageUri: new  "+ imageUri.toString());
+            }
+            //给crime添加imageUri字段
+            crime.setImageLoc(imageUri.toString());
+            crimeManager.updateCrime(crime);
+        }
+    }
+
 }

@@ -27,19 +27,19 @@ public class Crime {
     private String title;
     private boolean isSolved;
     private String suspect;
-    private String photo;
+    private String imageLoc;
 
 
 
-    @Generated(hash = 1181814990)
+    @Generated(hash = 1204746647)
     public Crime(Long id, String date, String title, boolean isSolved,
-            String suspect, String photo) {
+            String suspect, String imageLoc) {
         this.id = id;
         this.date = date;
         this.title = title;
         this.isSolved = isSolved;
         this.suspect = suspect;
-        this.photo = photo;
+        this.imageLoc = imageLoc;
     }
     @Generated(hash = 947324445)
     public Crime() {
@@ -74,10 +74,10 @@ public class Crime {
     public void setSuspect(String suspect) {
         this.suspect = suspect;
     }
-    public String getPhoto() {
-        return this.photo;
+    public String getImageLoc() {
+        return this.imageLoc;
     }
-    public void setPhoto(String photo) {
-        this.photo = photo;
+    public void setImageLoc(String imageLoc) {
+        this.imageLoc = imageLoc;
     }
 }

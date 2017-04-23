@@ -30,6 +30,7 @@ import java.util.List;
 public class CrimePagerActivity extends AppCompatActivity {
 
     private static final String TAG = "ybz";
+
     private ViewPager vp_container;
 
     private CrimeManager crimeManager ;

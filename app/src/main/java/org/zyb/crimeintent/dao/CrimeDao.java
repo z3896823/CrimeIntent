@@ -29,7 +29,7 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
         public final static Property Title = new Property(2, String.class, "title", false, "TITLE");
         public final static Property IsSolved = new Property(3, boolean.class, "isSolved", false, "IS_SOLVED");
         public final static Property Suspect = new Property(4, String.class, "suspect", false, "SUSPECT");
-        public final static Property Photo = new Property(5, String.class, "photo", false, "PHOTO");
+        public final static Property ImageLoc = new Property(5, String.class, "imageLoc", false, "IMAGE_LOC");
     }
 
 
@@ -50,7 +50,7 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
                 "\"TITLE\" TEXT," + // 2: title
                 "\"IS_SOLVED\" INTEGER NOT NULL ," + // 3: isSolved
                 "\"SUSPECT\" TEXT," + // 4: suspect
-                "\"PHOTO\" TEXT);"); // 5: photo
+                "\"IMAGE_LOC\" TEXT);"); // 5: imageLoc
     }
 
     /** Drops the underlying database table. */
@@ -84,9 +84,9 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
             stmt.bindString(5, suspect);
         }
  
-        String photo = entity.getPhoto();
-        if (photo != null) {
-            stmt.bindString(6, photo);
+        String imageLoc = entity.getImageLoc();
+        if (imageLoc != null) {
+            stmt.bindString(6, imageLoc);
         }
     }
 
@@ -115,9 +115,9 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
             stmt.bindString(5, suspect);
         }
  
-        String photo = entity.getPhoto();
-        if (photo != null) {
-            stmt.bindString(6, photo);
+        String imageLoc = entity.getImageLoc();
+        if (imageLoc != null) {
+            stmt.bindString(6, imageLoc);
         }
     }
 
@@ -134,7 +134,7 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // title
             cursor.getShort(offset + 3) != 0, // isSolved
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4), // suspect
-            cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5) // photo
+            cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5) // imageLoc
         );
         return entity;
     }
@@ -146,7 +146,7 @@ public class CrimeDao extends AbstractDao<Crime, Long> {
         entity.setTitle(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setIsSolved(cursor.getShort(offset + 3) != 0);
         entity.setSuspect(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
-        entity.setPhoto(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
+        entity.setImageLoc(cursor.isNull(offset + 5) ? null : cursor.getString(offset + 5));
      }
     
     @Override
